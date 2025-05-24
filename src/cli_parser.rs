@@ -5,30 +5,16 @@ use std::{collections::HashMap, env};
 
 pub fn collect_arguments() -> HashMap<String, String> {
     let arguments = env::args();
-    let mut args_hashmap: HashMap<String, String> = HashMap::new();
-
-    let mut previous_argument: String = "".to_string();
+    let mut args_hashmap = HashMap::new();
+    let mut previous_argument_key: Option<String> = None;
 
     for arg in arguments.skip(1) {
-        if arg.contains("=") {
-            // todo write a function to separate them and clean them up.
-            // key should be checked if it is a short argument or a long argument
-            // key should be cleaned of leading '-' for a short argument or '--' for a long argument
-            let arg_pair: Vec<String> = arg
-                .split('=')
-                .map(|x| x.into())
-                .collect::<Vec<String>>()
-                .clone();
-            let key = arg_pair.get(0).unwrap_or(&"".to_string()).to_string();
-            let value = arg_pair.get(1).unwrap_or(&"".to_string()).to_string();
-            args_hashmap.insert(key, value);
+        if let Some(prev_key) = previous_argument_key.take() {
+            args_hashmap.insert(prev_key, arg);
+        } else if let Some((key, value)) = arg.split_once('=') {
+            args_hashmap.insert(key.to_string(), value.to_string());
         } else {
-            if previous_argument.is_empty() {
-                previous_argument = arg;
-            } else {
-                args_hashmap.insert(previous_argument, arg);
-                previous_argument = "".to_string()
-            }
+            previous_argument_key = Some(arg);
         }
     }
 
