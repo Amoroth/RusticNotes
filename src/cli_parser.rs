@@ -3,7 +3,11 @@ use std::{collections::HashMap, env};
 // todo accept structs as a generic?
 // todo or make it a derive macro to implement collecting arguments into it
 
-pub fn collect_arguments() -> HashMap<String, String> {
+pub trait Configurable {
+    fn populate(&mut self, args: &HashMap<String, String>);
+}
+
+pub fn collect_arguments<T: Configurable>(config: &mut T) {
     let arguments = env::args();
     let mut args_hashmap = HashMap::new();
     let mut previous_argument_key: Option<String> = None;
@@ -18,7 +22,7 @@ pub fn collect_arguments() -> HashMap<String, String> {
         }
     }
 
-    args_hashmap
+    config.populate(&args_hashmap);
 }
 
 // type `&'static str`
