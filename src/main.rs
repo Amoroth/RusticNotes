@@ -1,7 +1,7 @@
 mod cli_parser;
 
 use std::{collections::HashMap};
-use cli_parser::{collect_arguments, CliConfigurable, CliArgument};
+use cli_parser::{collect_arguments, CliConfigurable, CliArgument, CliArgumentSpecification};
 
 #[derive(Debug)]
 struct Arguments {
@@ -10,6 +10,13 @@ struct Arguments {
 }
 
 impl CliConfigurable for Arguments {
+    fn get_definitions(&mut self) -> Vec<CliArgumentSpecification> {
+        vec![
+            self.name.get_specification(),
+            self.age.get_specification()
+        ]
+    }
+
     fn populate(&mut self, args: &HashMap<String, String>) {
         self.name.set_value(&args);
         self.age.set_value(&args);
