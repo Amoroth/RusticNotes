@@ -1,24 +1,22 @@
 mod cli_parser;
 
 use std::{collections::HashMap};
-use cli_parser::{collect_arguments, Configurable};
+use cli_parser::{collect_arguments, CliConfigurable, CliArgument};
 
 #[derive(Debug)]
 struct Arguments {
-    pub name: String,
+    pub name: CliArgument<String>,
 }
 
-impl Configurable for Arguments {
+impl CliConfigurable for Arguments {
     fn populate(&mut self, args: &HashMap<String, String>) {
-        if let Some(name) = args.get("name") {
-            self.name = name.clone();
-        }
+        self.name.set_value(&args);
     }
 }
 
 fn main() {
     let mut arguments = Arguments {
-        name: String::new(),
+        name: CliArgument::new("name".to_string()),
     };
     collect_arguments(&mut arguments);
 

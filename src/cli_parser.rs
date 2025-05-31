@@ -1,13 +1,31 @@
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, env, convert::From};
 
-// todo accept structs as a generic?
-// todo or make it a derive macro to implement collecting arguments into it
+#[derive(Debug)]
+pub struct CliArgument<T: From<String>> { // todo check if I can make it without From<String>
+    pub name: String,
+    pub value: Option<T>,
+}
 
-pub trait Configurable {
+impl<T: From<String>> CliArgument<T> {
+    pub fn new(name: String) -> Self {
+        CliArgument {
+            name,
+            value: None,
+        }
+    }
+
+    pub fn set_value(&mut self, args: &HashMap<String, String>) {        
+        if let Some(value) = args.get(&self.name) {
+            self.value = Some(value.clone().into());
+        }
+    }
+}
+
+pub trait CliConfigurable {
     fn populate(&mut self, args: &HashMap<String, String>);
 }
 
-pub fn collect_arguments<T: Configurable>(config: &mut T) {
+pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
     let arguments = env::args();
     let mut args_hashmap = HashMap::new();
     let mut previous_argument_key: Option<String> = None;
@@ -24,9 +42,3 @@ pub fn collect_arguments<T: Configurable>(config: &mut T) {
 
     config.populate(&args_hashmap);
 }
-
-// type `&'static str`
-// & - borrowed reference
-// 'static - lifetime notation for something. static is a special case and means for the whole lifetime of the program
-// str - is just a sequence of bytes
-// &'static means that the value is a borrowed 'dangling' reference to a sequence of bytes and CANNOT be changed, since its shared
