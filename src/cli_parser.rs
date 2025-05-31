@@ -1,12 +1,12 @@
-use std::{collections::HashMap, env, convert::From};
+use std::{collections::HashMap, env, str::FromStr};
 
 #[derive(Debug)]
-pub struct CliArgument<T: From<String>> { // todo check if I can make it without From<String>
+pub struct CliArgument<T: FromStr> { // todo check if I can make it without FromStr
     pub name: String,
     pub value: Option<T>,
 }
 
-impl<T: From<String>> CliArgument<T> {
+impl<T: FromStr> CliArgument<T> {
     pub fn new(name: String) -> Self {
         CliArgument {
             name,
@@ -16,7 +16,10 @@ impl<T: From<String>> CliArgument<T> {
 
     pub fn set_value(&mut self, args: &HashMap<String, String>) {        
         if let Some(value) = args.get(&self.name) {
-            self.value = Some(value.clone().into());
+            match value.parse::<T>() {
+                Ok(parsed_value) => self.value = Some(parsed_value),
+                Err(_) => eprintln!("Error parsing value for argument '{}': {}", self.name, value)
+            }
         }
     }
 }
