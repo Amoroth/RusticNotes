@@ -28,10 +28,10 @@ impl<T: FromStr> CliArgument<T> {
         }
     }
 
-    pub fn get_specification(&self) -> CliArgumentSpecification {
+    pub fn get_specification(&self, is_flag: Option<bool>) -> CliArgumentSpecification {
         CliArgumentSpecification {
             name: self.name.clone(),
-            is_flag: self.value.is_none(), // todo: check this from the generic type T if possible
+            is_flag: is_flag.unwrap_or_default(),
         }
     }
 }
@@ -62,12 +62,13 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
     let mut previous_argument_definition: Option<&CliArgumentSpecification> = None;
 
     for arg in env_args.skip(1) {
-        let argument_definition = if arg.starts_with("-") {
+        let argument_definition = if arg.starts_with("--") {
+            arugment_definitions.iter().find(|&x| x.name == arg.trim_start_matches("--"))
+        } else if arg.starts_with("-") {
             None
-        } else if arg.starts_with("--") {
-            arugment_definitions.iter().find(|&x| x.name == arg)
         } else {
             if previous_argument_definition.is_some() && !previous_argument_definition.unwrap().is_flag {
+                println!("is none");
                 args.last_mut().unwrap().1 = Some(arg.clone());
             }
 
