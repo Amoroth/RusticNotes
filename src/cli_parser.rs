@@ -62,13 +62,15 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
     let mut previous_argument_definition: Option<&CliArgumentSpecification> = None;
 
     for arg in env_args.skip(1) {
-        let argument_definition = if arg.starts_with("--") {
-            arugment_definitions.iter().find(|&x| x.name == arg.trim_start_matches("--"))
+        let mut arg_key = arg.clone();
+
+        let argument_definition = if arg_key.starts_with("--") {
+            arg_key = arg_key.trim_start_matches("--").to_string();
+            arugment_definitions.iter().find(|&x| x.name == arg_key)
         } else if arg.starts_with("-") {
             None
         } else {
             if previous_argument_definition.is_some() && !previous_argument_definition.unwrap().is_flag {
-                println!("is none");
                 args.last_mut().unwrap().1 = Some(arg.clone());
             }
 
@@ -76,7 +78,7 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
         };
 
         if argument_definition.is_some() {
-            args.push((arg.clone(), None));
+            args.push((arg_key, None));
         }
 
         previous_argument_definition = argument_definition;
