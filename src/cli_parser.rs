@@ -6,6 +6,11 @@ pub struct CliArgument<T: FromStr> { // todo check if I can make it without From
     pub value: Option<T>,
 }
 
+pub struct CliArgumentSpecification {
+    pub name: String,
+    pub is_flag: bool,
+}
+
 impl<T: FromStr> CliArgument<T> {
     pub fn new(name: String) -> Self {
         CliArgument {
@@ -22,9 +27,17 @@ impl<T: FromStr> CliArgument<T> {
             }
         }
     }
+
+    pub fn get_specification(&self) -> CliArgumentSpecification {
+        CliArgumentSpecification {
+            name: self.name.clone(),
+            is_flag: self.value.is_none(), // todo: check this from the generic type T if possible
+        }
+    }
 }
 
 pub trait CliConfigurable {
+    fn get_definitions(&mut self) -> Vec<CliArgumentSpecification>;
     fn populate(&mut self, args: &HashMap<String, String>);
 }
 
@@ -42,6 +55,13 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
             previous_argument_key = Some(arg);
         }
     }
+
+    // collect it all into the vector
+    // the get_definitions method is used to check if the argument is positional or an option
+    // check if the key is with a dash, if it is, add it to the vector as a tuple (key, None)
+    // if it is not, add it to the vector as a tuple (key, Some(value))
+    // take last value in the vector in populate method
+    // this will also allow to have multiple values for the same key
 
     config.populate(&args_hashmap);
 }
