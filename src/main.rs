@@ -12,8 +12,8 @@ struct Arguments {
 impl CliConfigurable for Arguments {
     fn get_definitions(&mut self) -> Vec<CliArgumentSpecification> {
         vec![
-            self.name.get_specification(None),
-            self.age.get_specification(None)
+            self.name.get_specification(false),
+            self.age.get_specification(false)
         ]
     }
 
