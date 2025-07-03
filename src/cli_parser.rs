@@ -1,20 +1,25 @@
 use std::{collections::HashMap, env, str::FromStr};
 
+// todo leave only value in cliargument and use CliArgumentSpecification for
+// the rest and include it in CliArgument as spec or something like that
 #[derive(Debug)]
 pub struct CliArgument<T: FromStr> { // todo check if I can make it without FromStr
     pub name: String,
+    pub short_name: Option<String>, // optional short name for the argument
     pub value: Option<T>,
 }
 
 pub struct CliArgumentSpecification {
     pub name: String,
+    pub short_name: Option<String>,
     pub is_flag: bool,
 }
 
 impl<T: FromStr> CliArgument<T> {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: String, short_name: Option<String>) -> Self {
         CliArgument {
             name,
+            short_name,
             value: None,
         }
     }
@@ -31,6 +36,7 @@ impl<T: FromStr> CliArgument<T> {
     pub fn get_specification(&self, is_flag: bool) -> CliArgumentSpecification {
         CliArgumentSpecification {
             name: self.name.clone(),
+            short_name: self.short_name.clone(),
             is_flag: is_flag,
         }
     }
@@ -48,13 +54,12 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
     let mut previous_argument_definition: Option<&CliArgumentSpecification> = None;
 
     for arg in env_args.skip(1) {
-        let mut arg_key = arg.clone();
-
-        let argument_definition = if arg_key.starts_with("--") {
-            arg_key = arg_key.trim_start_matches("--").to_string();
+        let argument_definition = if arg.starts_with("--") {
+            let arg_key = arg.trim_start_matches("--").to_string();
             arugment_definitions.iter().find(|&x| x.name == arg_key)
         } else if arg.starts_with("-") {
-            None
+            let arg_key = arg.trim_start_matches("-").to_string();
+            arugment_definitions.iter().find(|&x| x.short_name.is_some() && x.short_name.as_ref().unwrap().to_string() == arg_key)
         } else {
             if previous_argument_definition.is_some() && !previous_argument_definition.unwrap().is_flag {
                 args.last_mut().unwrap().1 = Some(arg.clone());
@@ -64,7 +69,7 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
         };
 
         if argument_definition.is_some() {
-            args.push((arg_key, None));
+            args.push((argument_definition.unwrap().name.clone(), None));
         }
 
         previous_argument_definition = argument_definition;

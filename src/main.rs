@@ -25,8 +25,8 @@ impl CliConfigurable for Arguments {
 
 fn main() {
     let mut arguments = Arguments {
-        name: CliArgument::new("name".to_string()),
-        age: CliArgument::new("age".to_string()),
+        name: CliArgument::new("name".to_string(), Some("n".to_string())),
+        age: CliArgument::new("age".to_string(), None),
     };
     collect_arguments(&mut arguments);
 
