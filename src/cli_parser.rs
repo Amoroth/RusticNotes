@@ -42,20 +42,6 @@ pub trait CliConfigurable {
 }
 
 pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
-    // let arguments = env::args();
-    // let mut args_hashmap = HashMap::new();
-    // let mut previous_argument_key: Option<String> = None;
-
-    // for arg in arguments.skip(1) {
-    //     if let Some(prev_key) = previous_argument_key.take() {
-    //         args_hashmap.insert(prev_key, arg);
-    //     } else if let Some((key, value)) = arg.split_once('=') {
-    //         args_hashmap.insert(key.to_string(), value.to_string());
-    //     } else {
-    //         previous_argument_key = Some(arg);
-    //     }
-    // }
-
     let env_args = env::args();
     let mut args: Vec<(String, Option<String>)> = vec![];
     let arugment_definitions = config.get_definitions();
