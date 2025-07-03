@@ -28,10 +28,10 @@ impl<T: FromStr> CliArgument<T> {
         }
     }
 
-    pub fn get_specification(&self, is_flag: Option<bool>) -> CliArgumentSpecification {
+    pub fn get_specification(&self, is_flag: bool) -> CliArgumentSpecification {
         CliArgumentSpecification {
             name: self.name.clone(),
-            is_flag: is_flag.unwrap_or_default(),
+            is_flag: is_flag,
         }
     }
 }
