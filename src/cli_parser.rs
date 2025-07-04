@@ -9,7 +9,7 @@ impl CliArgumentParsable for String {
         if value.is_empty() {
             Err(())
         } else {
-            Ok(value.join(" "))
+            Ok(value.last().unwrap_or(&String::new()).clone())
         }
     }
 }
