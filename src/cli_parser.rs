@@ -1,7 +1,21 @@
-use std::{collections::HashMap, env, str::FromStr};
+use std::{collections::HashMap, env};
+
+pub trait CliArgumentParsable {
+    fn parse_argument(value: &[String]) -> Result<Self, ()> where Self: Sized;
+}
+
+impl CliArgumentParsable for String {
+    fn parse_argument(value: &[String]) -> Result<Self, ()> {
+        if value.is_empty() {
+            Err(())
+        } else {
+            Ok(value.join(" "))
+        }
+    }
+}
 
 #[derive(Debug)]
-pub struct CliArgument<T: FromStr> { // todo check if I can make it without FromStr
+pub struct CliArgument<T: CliArgumentParsable> {
     pub specification: CliArgumentSpecification,
     pub value: Option<T>,
 }
@@ -13,7 +27,7 @@ pub struct CliArgumentSpecification {
     pub is_flag: bool,
 }
 
-impl<T: FromStr> CliArgument<T> {
+impl<T: CliArgumentParsable> CliArgument<T> {
     pub fn new(specification: CliArgumentSpecification) -> Self {
         CliArgument {
             value: None,
@@ -21,19 +35,20 @@ impl<T: FromStr> CliArgument<T> {
         }
     }
 
-    pub fn set_value(&mut self, args: &HashMap<String, String>) {        
-        if let Some(value) = args.get(&self.specification.name) {
-            match value.parse::<T>() {
-                Ok(parsed_value) => self.value = Some(parsed_value),
-                Err(_) => eprintln!("Error parsing value for argument '{}': {}", self.specification.name, value)
+    pub fn set_value(&mut self, args: &Vec<String>) {
+        self.value = match T::parse_argument(args) {
+            Ok(parsed_value) => Some(parsed_value),
+            Err(_) => {
+                eprintln!("Error parsing value for argument '{}': {:?}", self.specification.name, args);
+                None
             }
-        }
+        };
     }
 }
 
 pub trait CliConfigurable {
     fn get_definitions(&mut self) -> Vec<&CliArgumentSpecification>;
-    fn populate(&mut self, args: &HashMap<String, String>);
+    fn populate(&mut self, args: &HashMap<String, Vec<String>>);
 }
 
 pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
@@ -72,9 +87,9 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
     // this will also allow to have multiple values for the same key
 
     // don't bother with multiple values for now
-    let mut args_hashmap: HashMap<String, String> = HashMap::new();
+    let mut args_hashmap: HashMap<String, Vec<String>> = HashMap::new();
     for arg in args {
-        args_hashmap.insert(arg.0, arg.1.unwrap_or_default());
+        args_hashmap.insert(arg.0, vec![arg.1.unwrap_or_default()]);
     }
     
     config.populate(&args_hashmap);
