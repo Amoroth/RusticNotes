@@ -8,6 +8,7 @@ struct Arguments {
     pub name: CliArgument<String>,
     pub age: CliArgument<u32>,
     pub adult: CliArgument<bool>,
+    pub personalities: CliArgument<Vec<String>>,
 }
 
 impl CliConfigurable for Arguments {
@@ -16,6 +17,7 @@ impl CliConfigurable for Arguments {
             &self.name.specification,
             &self.age.specification,
             &self.adult.specification,
+            &self.personalities.specification,
         ]
     }
 
@@ -23,6 +25,7 @@ impl CliConfigurable for Arguments {
         self.name.set_value(args.get(&self.name.specification.name).unwrap_or(&vec![]));
         self.age.set_value(args.get(&self.age.specification.name).unwrap_or(&vec![]));
         self.adult.set_value(args.get(&self.adult.specification.name).unwrap_or(&vec![]));
+        self.personalities.set_value(args.get(&self.personalities.specification.name).unwrap_or(&vec![]));
     }
 }
 
@@ -42,6 +45,11 @@ fn main() {
             name: "adult".to_string(),
             short_name: Some("a".to_string()),
             is_flag: true
+        }),
+        personalities: CliArgument::new(CliArgumentSpecification {
+            name: "personalities".to_string(),
+            short_name: Some("p".to_string()),
+            is_flag: false
         }),
     };
     collect_arguments(&mut arguments);
