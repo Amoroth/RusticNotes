@@ -17,7 +17,7 @@ impl CliArgumentParsable for ActionEnum {
         if value.is_empty() {
             Err(())
         } else {
-            match value[0].to_lowercase().as_str() {
+            match value.first().unwrap().to_lowercase().as_str() {
                 "create" => Ok(ActionEnum::Create),
                 "update" => Ok(ActionEnum::Update),
                 "delete" => Ok(ActionEnum::Delete),

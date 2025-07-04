@@ -107,6 +107,7 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
             let arg_key = arg.trim_start_matches("-").to_string();
             arugment_definitions.iter().find(|&x| x.short_name.is_some() && x.short_name.as_ref().unwrap().to_string() == arg_key)
         } else {
+            // check if argument could be a positional argument by comparing its value with enum
             if previous_argument_definition.is_none() {
                 arugment_definitions.get(index)
             } else {
