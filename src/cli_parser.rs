@@ -64,8 +64,9 @@ pub struct CliArgument<T: CliArgumentParsable> {
 #[derive(Debug)]
 pub struct CliArgumentSpecification {
     pub name: String,
-    pub short_name: Option<String>, // optional short name for the argument
+    pub short_name: Option<String>,
     pub is_flag: bool,
+    pub optional: bool,
 }
 
 impl<T: CliArgumentParsable> CliArgument<T> {
@@ -98,7 +99,7 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
     let arugment_definitions = config.get_definitions();
     let mut previous_argument_definition: Option<&&CliArgumentSpecification> = None;
 
-    for arg in env_args.skip(1) {
+    for (index, arg) in env_args.skip(1).enumerate() {
         let argument_definition = if arg.starts_with("--") {
             let arg_key = arg.trim_start_matches("--").to_string();
             arugment_definitions.iter().find(|&x| x.name == arg_key)
@@ -106,11 +107,15 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
             let arg_key = arg.trim_start_matches("-").to_string();
             arugment_definitions.iter().find(|&x| x.short_name.is_some() && x.short_name.as_ref().unwrap().to_string() == arg_key)
         } else {
-            if previous_argument_definition.is_some() && !previous_argument_definition.unwrap().is_flag {
-                args.last_mut().unwrap().1 = Some(arg.clone());
+            if previous_argument_definition.is_none() {
+                arugment_definitions.get(index)
+            } else {
+                if previous_argument_definition.is_some() && !previous_argument_definition.unwrap().is_flag {
+                    args.last_mut().unwrap().1 = Some(arg.clone());
+                }
+    
+                None
             }
-
-            None
         };
 
         if argument_definition.is_some() {
@@ -120,14 +125,14 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
         previous_argument_definition = argument_definition;
     }
 
-    // x collect it all into the vector
-    // the get_definitions method is used to check if the argument is positional or an option
-    // check if the key is with a dash, if it is, add it to the vector as a tuple (key, None)
-    // if it is not, add it to the vector as a tuple (key, Some(value))
-    // take last value in the vector in populate method
-    // this will also allow to have multiple values for the same key
+    // check if all required arguments are present
+    for definition in arugment_definitions {
+        if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {
+            eprintln!("Missing required argument: {}", definition.name);
+            std::process::exit(1);
+        }
+    }
 
-    // don't bother with multiple values for now
     let mut args_hashmap: HashMap<String, Vec<String>> = HashMap::new();
     for arg in args {
         args_hashmap.entry(arg.0).or_insert(Vec::new()).push(arg.1.unwrap_or_default());
