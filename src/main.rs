@@ -6,23 +6,23 @@ use cli_parser::{collect_arguments, CliConfigurable, CliArgument, CliArgumentSpe
 #[derive(Debug)]
 struct Arguments {
     pub name: CliArgument<String>,
-    pub age: CliArgument<u32>,
-    pub adult: CliArgument<bool>,
+    // pub age: CliArgument<u32>,
+    // pub adult: CliArgument<bool>,
 }
 
 impl CliConfigurable for Arguments {
     fn get_definitions(&mut self) -> Vec<&CliArgumentSpecification> {
         vec![
             &self.name.specification,
-            &self.age.specification,
-            &self.adult.specification,
+            // &self.age.specification,
+            // &self.adult.specification,
         ]
     }
 
-    fn populate(&mut self, args: &HashMap<String, String>) {
-        self.name.set_value(&args);
-        self.age.set_value(&args);
-        self.adult.set_value(&args);
+    fn populate(&mut self, args: &HashMap<String, Vec<String>>) {
+        self.name.set_value(args.get(&self.name.specification.name).unwrap_or(&vec![]));
+        // self.age.set_value(&args);
+        // self.adult.set_value(&args);
     }
 }
 
@@ -33,16 +33,16 @@ fn main() {
             short_name: Some("n".to_string()),
             is_flag: false
         }),
-        age: CliArgument::new(CliArgumentSpecification {
-            name: "age".to_string(),
-            short_name: None,
-            is_flag: false
-        }),
-        adult: CliArgument::new(CliArgumentSpecification {
-            name: "adult".to_string(),
-            short_name: Some("a".to_string()),
-            is_flag: true
-        }),
+        // age: CliArgument::new(CliArgumentSpecification {
+        //     name: "age".to_string(),
+        //     short_name: None,
+        //     is_flag: false
+        // }),
+        // adult: CliArgument::new(CliArgumentSpecification {
+        //     name: "adult".to_string(),
+        //     short_name: Some("a".to_string()),
+        //     is_flag: true
+        // }),
     };
     collect_arguments(&mut arguments);
 
