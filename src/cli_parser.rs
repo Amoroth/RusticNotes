@@ -14,6 +14,30 @@ impl CliArgumentParsable for String {
     }
 }
 
+impl CliArgumentParsable for u32 {
+    fn parse_argument(value: &[String]) -> Result<Self, ()> {
+        if value.is_empty() {
+            Err(())
+        } else {
+            value[0].parse::<u32>().map_err(|_| ())
+        }
+    }
+}
+
+impl CliArgumentParsable for bool {
+    fn parse_argument(value: &[String]) -> Result<Self, ()> {
+        if value.is_empty() {
+            Err(())
+        } else {
+            match value[0].to_lowercase().as_str() {
+                "true" | "1" => Ok(true),
+                "false" | "0" => Ok(false),
+                _ => Err(()),
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct CliArgument<T: CliArgumentParsable> {
     pub specification: CliArgumentSpecification,
