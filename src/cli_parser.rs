@@ -38,6 +38,23 @@ impl CliArgumentParsable for bool {
     }
 }
 
+impl<T: CliArgumentParsable> CliArgumentParsable for Vec<T> {
+    fn parse_argument(value: &[String]) -> Result<Self, ()> {
+        if value.is_empty() {
+            Err(())
+        } else {
+            let mut parsed_values = Vec::new();
+            for v in value {
+                match T::parse_argument(&[v.clone()]) {
+                    Ok(parsed_value) => parsed_values.push(parsed_value),
+                    Err(_) => return Err(()),
+                }
+            }
+            Ok(parsed_values)
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct CliArgument<T: CliArgumentParsable> {
     pub specification: CliArgumentSpecification,
@@ -113,7 +130,7 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
     // don't bother with multiple values for now
     let mut args_hashmap: HashMap<String, Vec<String>> = HashMap::new();
     for arg in args {
-        args_hashmap.insert(arg.0, vec![arg.1.unwrap_or_default()]);
+        args_hashmap.entry(arg.0).or_insert(Vec::new()).push(arg.1.unwrap_or_default());
     }
     
     config.populate(&args_hashmap);
