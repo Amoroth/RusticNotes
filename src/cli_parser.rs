@@ -1,49 +1,38 @@
 use std::{collections::HashMap, env, str::FromStr};
 
-// todo leave only value in cliargument and use CliArgumentSpecification for
-// the rest and include it in CliArgument as spec or something like that
 #[derive(Debug)]
 pub struct CliArgument<T: FromStr> { // todo check if I can make it without FromStr
-    pub name: String,
-    pub short_name: Option<String>, // optional short name for the argument
+    pub specification: CliArgumentSpecification,
     pub value: Option<T>,
 }
 
+#[derive(Debug)]
 pub struct CliArgumentSpecification {
     pub name: String,
-    pub short_name: Option<String>,
+    pub short_name: Option<String>, // optional short name for the argument
     pub is_flag: bool,
 }
 
 impl<T: FromStr> CliArgument<T> {
-    pub fn new(name: String, short_name: Option<String>) -> Self {
+    pub fn new(specification: CliArgumentSpecification) -> Self {
         CliArgument {
-            name,
-            short_name,
             value: None,
+            specification,
         }
     }
 
     pub fn set_value(&mut self, args: &HashMap<String, String>) {        
-        if let Some(value) = args.get(&self.name) {
+        if let Some(value) = args.get(&self.specification.name) {
             match value.parse::<T>() {
                 Ok(parsed_value) => self.value = Some(parsed_value),
-                Err(_) => eprintln!("Error parsing value for argument '{}': {}", self.name, value)
+                Err(_) => eprintln!("Error parsing value for argument '{}': {}", self.specification.name, value)
             }
-        }
-    }
-
-    pub fn get_specification(&self, is_flag: bool) -> CliArgumentSpecification {
-        CliArgumentSpecification {
-            name: self.name.clone(),
-            short_name: self.short_name.clone(),
-            is_flag: is_flag,
         }
     }
 }
 
 pub trait CliConfigurable {
-    fn get_definitions(&mut self) -> Vec<CliArgumentSpecification>;
+    fn get_definitions(&mut self) -> Vec<&CliArgumentSpecification>;
     fn populate(&mut self, args: &HashMap<String, String>);
 }
 
@@ -51,7 +40,7 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
     let env_args = env::args();
     let mut args: Vec<(String, Option<String>)> = vec![];
     let arugment_definitions = config.get_definitions();
-    let mut previous_argument_definition: Option<&CliArgumentSpecification> = None;
+    let mut previous_argument_definition: Option<&&CliArgumentSpecification> = None;
 
     for arg in env_args.skip(1) {
         let argument_definition = if arg.starts_with("--") {
@@ -69,7 +58,7 @@ pub fn collect_arguments<T: CliConfigurable>(config: &mut T) {
         };
 
         if argument_definition.is_some() {
-            args.push((argument_definition.unwrap().name.clone(), None));
+            args.push((argument_definition.unwrap().name.clone(), if argument_definition.unwrap().is_flag { Some(String::from("true")) } else { None }));
         }
 
         previous_argument_definition = argument_definition;
