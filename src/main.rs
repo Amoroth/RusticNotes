@@ -70,10 +70,10 @@ fn main() {
             println!("root: {:?}", args);
         })
         .build();
-    // todo change struct to builder pattern
     // todo add automatic help message generation
     // todo add automatic version message generation
     // todo add automatic help message generation for subcommands
     // todo change this to something like CliCommandRoot so that only this has fields like version?
+    // todo implement short name chaining
     cmd.run(env::args());
 }
