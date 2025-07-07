@@ -33,26 +33,25 @@ fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
         return command;
     }
 
-    for (index, arg) in env_args.clone().into_iter().skip(1).enumerate() {
+    let mut cmd = command;
+
+    for arg in env_args.clone().into_iter().skip(1) {
         if !arg.starts_with("-") {
-            if let Some(subcommand) = search_command(&arg, command) {
-                return subcommand;
-            } else {
-                // eprintln!("Unknown command: {}", arg);
-                // std::process::exit(1);
+            if let Some(subcommand) = search_command(&arg, cmd) {
+                cmd = subcommand;
             }
         }
     }
 
     // If no subcommand matches, return the root command
-    command
+    cmd
 }
 
 fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String, Option<String>)> {
     let mut args: Vec<(String, Option<String>)> = vec![];
     let mut previous_argument_definition: Option<&CliCommandOption> = None;
 
-    for (index, arg) in env_args.clone().into_iter().skip(1).enumerate() {
+    for arg in env_args.clone().into_iter().skip(1) {
         if arg.starts_with("--") {
             let arg_key = arg.trim_start_matches("--").to_string();
             let option_definition = search_command_options(arg_key.as_str(), command);
@@ -68,18 +67,9 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
                 previous_argument_definition = option_definition;
             }
         } else {
-            // check if argument could be a positional argument by comparing its value with enum
-            // if previous_argument_definition.is_none() {
-            //     let command_definition = search_command(&arg, command);
-                
-            //     if command_definition.is_some() {
-            //         return collect_arguments(env_args, command_definition.unwrap())
-            //     }
-            // } else {
-                if previous_argument_definition.is_some() && !previous_argument_definition.unwrap().is_flag {
-                    args.last_mut().unwrap().1 = Some(arg.clone());
-                }
-            // }
+            if previous_argument_definition.is_some() && !previous_argument_definition.unwrap().is_flag {
+                args.last_mut().unwrap().1 = Some(arg.clone());
+            }
         };
     }
 
@@ -113,10 +103,6 @@ fn search_command<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliComm
         if cmd.name == name {
             return Some(cmd);
         }
-
-        // if let Some(subcommand) = search_command(name, cmd) {
-        //     return Some(subcommand);
-        // }
     }
 
     None
