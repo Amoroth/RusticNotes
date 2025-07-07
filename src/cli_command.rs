@@ -94,11 +94,55 @@ impl CliCommand {
     }
 
     pub fn get_help(&self) {
-        println!("Help");
+        self.get_version();
+
+        if let Some(description) = &self.description {
+            println!();
+            println!("DESCRIPTION");
+            println!("    {}", description); // todo dynamic padding
+        }
+
+        println!();
+        println!("USAGE");
+        // todo if root can be called without commands, add [] to COMMAND
+        println!("    $ {} COMMAND [OPTIONS]", self.name);
+
+        if false {
+            println!();
+            println!("EXAMPLE");
+            println!("    {}", self.name); // placeholder, self.example
+        }
+
+        if !self.subcommands.is_empty() {
+            println!();
+            println!("COMMANDS");
+            for subcommand in &self.subcommands {
+                let cmd_name = if subcommand.optional { format!("[{}]", subcommand.name) } else { format!("{}", subcommand.name) };
+                println!("    {} - {}", cmd_name, subcommand.description.as_deref().unwrap_or(""));
+            }
+            println!();
+            // todo if root can be called without commands, add [] to COMMAND
+            println!("    Use \"{} COMMAND --help\" for more information about a command.", self.name);
+        }
+
+        if !self.options.is_empty() {
+            println!();
+            println!("OPTIONS");
+            // todo dynamic padding between names and descriptions
+            for option in &self.options {
+                let name = if option.is_flag {
+                    format!("--{}", option.name)
+                } else {
+                    format!("--{} <value>", option.name)
+                };
+                let short_name = option.short_name.as_ref().map_or(String::new(), |s| format!("-{}, ", s));
+                println!("    {}{}, {}", short_name, name, option.description.as_deref().unwrap_or(""));
+            }
+        }
     }
 
     pub fn get_version(&self) {
-        println!("Version");
+        println!("{} {}", self.name, self.version.as_ref().unwrap_or(&String::from("")));
     }
 }
 
@@ -109,6 +153,7 @@ pub struct CliCommandOption {
     pub short_name: Option<String>,
     pub is_flag: bool,
     pub optional: bool,
+    pub description: Option<String>,
 }
 
 fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
