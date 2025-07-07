@@ -4,6 +4,7 @@ use std::{collections::HashMap, env};
 use cli_command::{CliCommandBuilder, CliCommandOption};
 
 fn main() {
+    // todo positional arguments
     let cmd = CliCommandBuilder::default()
         .set_name("cli_parser_example")
         .set_description("An example CLI parser using Rust")
@@ -21,6 +22,7 @@ fn main() {
                         short_name: Some("n".to_string()),
                         is_flag: false,
                         optional: true,
+                        description: Some("The name of the person".to_string()),
                     })
                 .add_option(
                     &CliCommandOption {
@@ -28,6 +30,7 @@ fn main() {
                         short_name: None,
                         is_flag: false,
                         optional: true,
+                        description: Some("The age of the person".to_string()),
                     })
                 .add_option(
                     &CliCommandOption {
@@ -35,6 +38,7 @@ fn main() {
                         short_name: Some("a".to_string()),
                         is_flag: true,
                         optional: true,
+                        description: Some("Whether the person is an adult".to_string()),
                     })
                 .add_option(
                     &CliCommandOption {
@@ -42,6 +46,7 @@ fn main() {
                         short_name: Some("p".to_string()),
                         is_flag: false,
                         optional: true,
+                        description: Some("A list of personalities".to_string()),
                     })
                 .add_subcommand(
                     &CliCommandBuilder::default()
@@ -55,6 +60,7 @@ fn main() {
                                 short_name: Some("c".to_string()),
                                 is_flag: false,
                                 optional: true,
+                                description: Some("A crap option".to_string()),
                             })
                         .set_action(|args: HashMap<String, Vec<String>>| {
                             println!("new: {:?}", args);
