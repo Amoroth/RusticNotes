@@ -5,6 +5,10 @@ use cli_command::{CliCommand, CliCommandOption};
 
 fn main() {
     // todo change struct to builder pattern
+    // todo add automatic help message generation
+    // todo add automatic version message generation
+    // todo add automatic help message generation for subcommands
+    // todo change this to something like CliCommandRoot so that only this has fields like version?
     let cmd = CliCommand {
         name: "cli_parser_example".to_string(),
         description: Some("An example CLI parser using Rust".to_string()),
@@ -14,18 +18,18 @@ fn main() {
         action: |args: HashMap<String, Vec<String>>| {
             println!("root: {:?}", args);
         },
-        subcommands: vec![
+        subcommands: vec![ // todo maybe change vec to something like CliCommandGroup for easier help messages?
             CliCommand {
                 name: "example".to_string(),
                 description: Some("An example command to demonstrate CLI parsing".to_string()),
                 version: Some("0.1.0".to_string()),
-                optional: false,
+                optional: true,
                 subcommands: vec![
                     CliCommand {
                         name: "new".to_string(),
                         description: Some("An examplen new command to demonstrate CLI parsing".to_string()),
                         version: Some("0.1.0".to_string()),
-                        optional: false,
+                        optional: true,
                         subcommands: vec![],
                         options: vec![
                             CliCommandOption {
