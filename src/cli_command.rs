@@ -74,14 +74,14 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
     }
 
     // check if all required arguments are present
-    // if !command.subcommands.is_empty() {
-    //     for definition in &command.subcommands {
-    //         if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {
-    //             eprintln!("Missing required argument: {}", definition.name);
-    //             std::process::exit(1);
-    //         }
-    //     }
-    // }
+    if !command.subcommands.is_empty() {
+        for definition in &command.subcommands {
+            if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {
+                eprintln!("Missing required argument: {}", definition.name);
+                std::process::exit(1);
+            }
+        }
+    }
 
     args
 }
