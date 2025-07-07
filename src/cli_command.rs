@@ -59,7 +59,7 @@ pub fn collect_arguments(env_args: env::Args, command: &CliCommand) -> Vec<(Stri
 
     // check if all required arguments are present
     if !command.subcommands.is_empty() {
-        for definition in command.subcommands {
+        for definition in &command.subcommands {
             if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {
                 eprintln!("Missing required argument: {}", definition.name);
                 std::process::exit(1);
@@ -78,18 +78,20 @@ fn get_arguments_map(arguments: Vec<(String, Option<String>)>) -> HashMap<String
     args_hashmap
 }
 
-fn search_command(name: &str, command: &CliCommand) -> Option<&CliCommand> {
+fn search_command<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliCommand> {
     if command.name == name {
         return Some(command);
     }
 
     if !command.subcommands.is_empty() {
-        for cmd in command.subcommands {
+        for cmd in &command.subcommands {
             if cmd.name == name {
                 return Some(cmd);
             }
-            if let Some(subcommand) = search_command(name, &cmd.subcommands) {
-                return Some(subcommand);
+            for cmd in &cmd.subcommands {
+                if let Some(subcommand) = search_command(name, cmd) {
+                    return Some(subcommand);
+                }
             }
         }
     }
@@ -97,7 +99,7 @@ fn search_command(name: &str, command: &CliCommand) -> Option<&CliCommand> {
     None
 }
 
-fn search_command_options<'a>(name: &str, command: &CliCommand) -> Option<&'a CliCommandOption> {
+fn search_command_options<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliCommandOption> {
     for option in &command.options {
         if option.name == name || option.short_name.as_deref() == Some(name) {
             return Some(option);
