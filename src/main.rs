@@ -6,12 +6,20 @@ use cli_command::{CliCommand, CliCommandOption};
 fn main() {
     let cmd = CliCommand {
         name: "cli_parser_example".to_string(),
-        description: "An example CLI parser using Rust".to_string(),
-        version: "0.1.0".to_string(),
+        description: Some("An example CLI parser using Rust".to_string()),
+        version: Some("0.1.0".to_string()),
+        optional: false,
+        options: vec![],
+        action: |args: HashMap<String, Vec<String>>| {
+            println!("root: {:?}", args);
+        },
         subcommands: vec![
             CliCommand {
                 name: "example".to_string(),
-                description: "An example command to demonstrate CLI parsing".to_string(),
+                description: Some("An example command to demonstrate CLI parsing".to_string()),
+                version: Some("0.1.0".to_string()),
+                optional: false,
+                subcommands: vec![],
                 options: vec![
                     CliCommandOption {
                         name: "name".to_string(),
@@ -39,7 +47,7 @@ fn main() {
                     },
                 ],
                 action: |args: HashMap<String, Vec<String>>| {
-                    println!("{:?}", args);
+                    println!("example: {:?}", args);
                 },
             }
         ],

@@ -13,8 +13,10 @@ pub struct CliCommand {
 
 impl CliCommand {
     pub fn run(&self, args: env::Args) {
-        let arguments = collect_arguments(args, self);
-        (self.action)(get_arguments_map(arguments));
+        let env_args: Vec<String> = args.collect();
+        let command = select_command(env_args.clone(), self);
+        let arguments = collect_arguments(env_args, command);
+        (command.action)(get_arguments_map(arguments));
     }
 }
 
@@ -26,46 +28,70 @@ pub struct CliCommandOption {
     pub optional: bool,
 }
 
-pub fn collect_arguments(env_args: env::Args, command: &CliCommand) -> Vec<(String, Option<String>)> {
+fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
+    if env_args.len() < 2 {
+        return command;
+    }
+
+    for (index, arg) in env_args.clone().into_iter().skip(1).enumerate() {
+        if !arg.starts_with("-") {
+            if let Some(subcommand) = search_command(&arg, command) {
+                return subcommand;
+            } else {
+                // eprintln!("Unknown command: {}", arg);
+                // std::process::exit(1);
+            }
+        }
+    }
+
+    // If no subcommand matches, return the root command
+    command
+}
+
+fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String, Option<String>)> {
     let mut args: Vec<(String, Option<String>)> = vec![];
     let mut previous_argument_definition: Option<&CliCommandOption> = None;
 
-    for (index, arg) in env_args.skip(1).enumerate() {
+    for (index, arg) in env_args.clone().into_iter().skip(1).enumerate() {
         if arg.starts_with("--") {
             let arg_key = arg.trim_start_matches("--").to_string();
             let option_definition = search_command_options(arg_key.as_str(), command);
-            args.push((option_definition.unwrap().name.clone(), if option_definition.unwrap().is_flag { Some(String::from("true")) } else { None }));
-            previous_argument_definition = option_definition;
+            if option_definition.is_some() {
+                args.push((option_definition.unwrap().name.clone(), if option_definition.unwrap().is_flag { Some(String::from("true")) } else { None }));
+                previous_argument_definition = option_definition;
+            }
         } else if arg.starts_with("-") {
             let arg_key = arg.trim_start_matches("-").to_string();
             let option_definition = search_command_options(arg_key.as_str(), command);
-            args.push((option_definition.unwrap().name.clone(), if option_definition.unwrap().is_flag { Some(String::from("true")) } else { None }));
-            previous_argument_definition = option_definition;
+            if option_definition.is_some() {
+                args.push((option_definition.unwrap().name.clone(), if option_definition.unwrap().is_flag { Some(String::from("true")) } else { None }));
+                previous_argument_definition = option_definition;
+            }
         } else {
             // check if argument could be a positional argument by comparing its value with enum
-            if previous_argument_definition.is_none() {
-                let command_definition = search_command(&arg, command);
+            // if previous_argument_definition.is_none() {
+            //     let command_definition = search_command(&arg, command);
                 
-                if command_definition.is_some() {
-                    return collect_arguments(env_args, command)
-                }
-            } else {
+            //     if command_definition.is_some() {
+            //         return collect_arguments(env_args, command_definition.unwrap())
+            //     }
+            // } else {
                 if previous_argument_definition.is_some() && !previous_argument_definition.unwrap().is_flag {
                     args.last_mut().unwrap().1 = Some(arg.clone());
                 }
-            }
+            // }
         };
     }
 
     // check if all required arguments are present
-    if !command.subcommands.is_empty() {
-        for definition in &command.subcommands {
-            if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {
-                eprintln!("Missing required argument: {}", definition.name);
-                std::process::exit(1);
-            }
-        }
-    }
+    // if !command.subcommands.is_empty() {
+    //     for definition in &command.subcommands {
+    //         if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {
+    //             eprintln!("Missing required argument: {}", definition.name);
+    //             std::process::exit(1);
+    //         }
+    //     }
+    // }
 
     args
 }
@@ -83,17 +109,14 @@ fn search_command<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliComm
         return Some(command);
     }
 
-    if !command.subcommands.is_empty() {
-        for cmd in &command.subcommands {
-            if cmd.name == name {
-                return Some(cmd);
-            }
-            for cmd in &cmd.subcommands {
-                if let Some(subcommand) = search_command(name, cmd) {
-                    return Some(subcommand);
-                }
-            }
+    for cmd in &command.subcommands {
+        if cmd.name == name {
+            return Some(cmd);
         }
+
+        // if let Some(subcommand) = search_command(name, cmd) {
+        //     return Some(subcommand);
+        // }
     }
 
     None
@@ -102,12 +125,6 @@ fn search_command<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliComm
 fn search_command_options<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliCommandOption> {
     for option in &command.options {
         if option.name == name || option.short_name.as_deref() == Some(name) {
-            return Some(option);
-        }
-    }
-
-    for subcommand in &command.subcommands {
-        if let Some(option) = search_command_options(name, subcommand) {
             return Some(option);
         }
     }
