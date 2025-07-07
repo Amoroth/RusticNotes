@@ -1,12 +1,75 @@
 use std::{collections::HashMap, env};
 
+#[derive(Default)]
+pub struct CliCommandBuilder {
+    name: String,
+    description: Option<String>,
+    version: Option<String>,
+    optional: bool,
+    subcommands: Vec<CliCommand>,
+    options: Vec<CliCommandOption>,
+    action: Option<fn(HashMap<String, Vec<String>>)>,
+}
+
+impl CliCommandBuilder {
+    pub fn set_name(&mut self, name: &str) -> &mut Self {
+        self.name = name.to_string();
+        self
+    }
+
+    pub fn set_description(&mut self, description: &str) -> &mut Self {
+        self.description = Some(description.to_string());
+        self
+    }
+
+    pub fn set_version(&mut self, version: &str) -> &mut Self {
+        self.version = Some(version.to_string());
+        self
+    }
+
+    pub fn set_optional(&mut self, optional: bool) -> &mut Self {
+        self.optional = optional;
+        self
+    }
+
+    pub fn add_subcommand(&mut self, subcommand: &CliCommand) -> &mut Self {
+        self.subcommands.push(subcommand.clone());
+        self
+    }
+
+    pub fn add_option(&mut self, option: &CliCommandOption) -> &mut Self {
+        self.options.push(option.clone());
+        self
+    }
+
+    pub fn set_action(&mut self, action: fn(HashMap<String, Vec<String>>)) -> &mut Self {
+        self.action = Some(action.to_owned());
+        self
+    }
+
+    pub fn build(&self) -> CliCommand {
+        CliCommand {
+            name: self.name.clone(),
+            description: self.description.clone(),
+            version: self.version.clone(),
+            optional: self.optional.clone(),
+            subcommands: self.subcommands.clone(),
+            options: self.options.clone(),
+            action: self.action.unwrap_or(|args: HashMap<String, Vec<String>>| {
+                println!("Command executed with arguments: {:?}", args);
+            }),
+        }
+    }
+}
+
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct CliCommand {
     pub name: String,
     pub description: Option<String>,
     pub version: Option<String>,
-    pub subcommands: Vec<CliCommand>,
     pub optional: bool,
+    pub subcommands: Vec<CliCommand>,
     pub options: Vec<CliCommandOption>,
     pub action: fn(HashMap<String, Vec<String>>),
 }
@@ -21,6 +84,7 @@ impl CliCommand {
 }
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct CliCommandOption {
     pub name: String,
     pub short_name: Option<String>,
