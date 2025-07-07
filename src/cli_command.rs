@@ -94,6 +94,7 @@ impl CliCommand {
     }
 
     pub fn get_help(&self) {
+        // todo this prints version of subcommand instead of root command
         self.get_version();
 
         if let Some(description) = &self.description {
