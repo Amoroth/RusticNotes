@@ -78,8 +78,27 @@ impl CliCommand {
     pub fn run(&self, args: env::Args) {
         let env_args: Vec<String> = args.collect();
         let command = select_command(env_args.clone(), self);
+
+        if search_for_help(env_args.clone()) {
+            command.get_help();
+            return;
+        }
+
+        if search_for_version(env_args.clone()) {
+            command.get_version();
+            return;
+        }
+
         let arguments = collect_arguments(env_args, command);
         (command.action)(get_arguments_map(arguments));
+    }
+
+    pub fn get_help(&self) {
+        println!("Help");
+    }
+
+    pub fn get_version(&self) {
+        println!("Version");
     }
 }
 
@@ -180,4 +199,12 @@ fn search_command_options<'a>(name: &str, command: &'a CliCommand) -> Option<&'a
     }
 
     None
+}
+
+fn search_for_help(env_args: Vec<String>) -> bool {
+    env_args.iter().any(|arg| arg == "--help" || arg == "-h")
+}
+
+fn search_for_version(env_args: Vec<String>) -> bool {
+    env_args.iter().any(|arg| arg == "--version" || arg == "-V")
 }
