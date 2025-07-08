@@ -171,7 +171,7 @@ pub struct CliCommandOption {
 }
 
 fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
-    if env_args.len() < 2 {
+    if env_args.len() < 1 {
         return command;
     }
 
