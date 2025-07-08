@@ -48,6 +48,16 @@ pub fn load_all_notes() -> Vec<RusticNote> {
     }
 }
 
+pub fn get_note_by_id(id: u32) -> Option<RusticNote> {
+    let notes = load_all_notes();
+    for note in notes {
+        if note.id == id {
+            return Some(note);
+        }
+    }
+    None
+}
+
 pub fn get_next_id() -> u32 {
     let notes = load_all_notes();
     let mut biggest_id = 0;

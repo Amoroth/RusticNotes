@@ -48,6 +48,29 @@ fn main() {
                 })
                 .build(),
         )
+        .add_subcommand(
+            &CliCommandBuilder::default()
+                .set_name("get")
+                .set_description("Get a single note by its id")
+                .set_optional(false)
+                .add_argument("id")
+                .set_action(|args: HashMap<String, Vec<String>>| {
+                    if let Some(id_str) = args.get("id").and_then(|v| v.last()) {
+                        if let Ok(id) = id_str.parse::<u32>() {
+                            if let Some(note) = notes::get_note_by_id(id) {
+                                println!("{}", note.content);
+                            } else {
+                                eprintln!("Note with id {} not found.", id);
+                            }
+                        } else {
+                            eprintln!("Invalid id: {}", id_str);
+                        }
+                    } else {
+                        eprintln!("Error: Note id is required.");
+                    }
+                })
+                .build(),
+        )
         .build();
     cli.run(env::args());
 }
