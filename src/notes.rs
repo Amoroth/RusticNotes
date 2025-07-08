@@ -21,10 +21,7 @@ pub fn save_note(note: &RusticNote) {
     println!("Serialized note: {}", note_json);
 
     // todo save incrementally, don't overwrite whole file on every save
-    let mut saved_notes: Vec<RusticNote> = match std::fs::read_to_string("notes.json") {
-        Ok(data) => serde_json::from_str(&data).unwrap_or_else(|_| vec![]),
-        Err(_) => vec![],
-    };
+    let mut saved_notes: Vec<RusticNote> = load_all_notes();
 
     saved_notes.push(note.clone());
 
@@ -40,5 +37,12 @@ pub fn save_note(note: &RusticNote) {
         Err(e) => {
             eprintln!("Error creating file: {}", e);
         }
+    }
+}
+
+pub fn load_all_notes() -> Vec<RusticNote> {
+    match std::fs::read_to_string("notes.json") {
+        Ok(data) => serde_json::from_str(&data).unwrap_or_else(|_| vec![]),
+        Err(_) => vec![],
     }
 }
