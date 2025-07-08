@@ -4,7 +4,6 @@ use std::{collections::HashMap, env};
 use cli_command::{CliCommandBuilder, CliCommandOption};
 
 fn main() {
-    // todo positional arguments
     let cmd = CliCommandBuilder::default()
         .set_name("cli_parser_example")
         .set_description("An example CLI parser using Rust")
