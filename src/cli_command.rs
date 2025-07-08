@@ -80,6 +80,7 @@ impl CliCommand {
         let command = select_command(env_args.clone(), self);
 
         if search_for_help(env_args.clone()) {
+            self.get_version();
             command.get_help();
             return;
         }
@@ -94,9 +95,6 @@ impl CliCommand {
     }
 
     pub fn get_help(&self) {
-        // todo this prints version of subcommand instead of root command
-        self.get_version();
-
         if let Some(description) = &self.description {
             println!();
             println!("DESCRIPTION");
