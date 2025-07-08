@@ -19,7 +19,7 @@ pub fn save_note(note: &RusticNote) {
     println!("Saving note: {}", note.content);
 
     let note_json = serde_json::to_string(note).unwrap();
-    println!("Serialized note: {}", note_json);
+    println!("Serialized note: {note_json}");
 
     // todo save incrementally, don't overwrite whole file on every save
     let mut saved_notes: Vec<RusticNote> = load_all_notes();
@@ -30,13 +30,13 @@ pub fn save_note(note: &RusticNote) {
     match std::fs::File::create("notes.json") {
         Ok(mut file) => {
             if let Err(e) = file.write_all(serialized_notes.as_bytes()) {
-                eprintln!("Error writing to file: {}", e);
+                eprintln!("Error writing to file: {e}");
             } else {
                 println!("Note saved successfully.");
             }
         }
         Err(e) => {
-            eprintln!("Error creating file: {}", e);
+            eprintln!("Error creating file: {e}");
         }
     }
 }
@@ -50,12 +50,7 @@ pub fn load_all_notes() -> Vec<RusticNote> {
 
 pub fn get_note_by_id(id: u32) -> Option<RusticNote> {
     let notes = load_all_notes();
-    for note in notes {
-        if note.id == id {
-            return Some(note);
-        }
-    }
-    None
+    notes.into_iter().find(|note| note.id == id)
 }
 
 pub fn get_next_id() -> u32 {

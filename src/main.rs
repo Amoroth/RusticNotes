@@ -2,7 +2,7 @@ mod cli_command;
 mod notes;
 
 use std::{collections::HashMap, env};
-use cli_command::{CliCommandBuilder, CliCommand, CliCommandOption};
+use cli_command::{CliCommandBuilder, CliCommand};
 
 const ROOT_VERSION: &str = "0.1.0";
 
@@ -21,7 +21,7 @@ fn main() {
                 .set_action(|args: HashMap<String, Vec<String>>| {
                     if let Some(note) = args.get("note") {
                         let note_content = note.last().unwrap_or(&String::from("")).to_string();
-                        println!("Creating new note: {}", note_content);
+                        println!("Creating new note: {note_content}");
                         let new_note = notes::RusticNote::new(note_content.clone());
                         notes::save_note(&new_note);
                     } else {
@@ -60,10 +60,10 @@ fn main() {
                             if let Some(note) = notes::get_note_by_id(id) {
                                 println!("{}", note.content);
                             } else {
-                                eprintln!("Note with id {} not found.", id);
+                                eprintln!("Note with id {id} not found.");
                             }
                         } else {
-                            eprintln!("Invalid id: {}", id_str);
+                            eprintln!("Invalid id: {id_str}");
                         }
                     } else {
                         eprintln!("Error: Note id is required.");

@@ -1,5 +1,7 @@
 use std::{collections::HashMap, env};
 
+type CliCommandAction = fn(HashMap<String, Vec<String>>);
+
 #[derive(Default)]
 pub struct CliCommandBuilder {
     name: String,
@@ -9,7 +11,7 @@ pub struct CliCommandBuilder {
     arguments: Vec<String>,
     subcommands: Vec<CliCommand>,
     options: Vec<CliCommandOption>,
-    action: Option<fn(HashMap<String, Vec<String>>)>,
+    action: Option<CliCommandAction>,
 }
 
 impl CliCommandBuilder {
@@ -43,6 +45,7 @@ impl CliCommandBuilder {
         self
     }
 
+    #[allow(dead_code)]
     pub fn add_option(&mut self, option: &CliCommandOption) -> &mut Self {
         self.options.push(option.clone());
         self
@@ -58,12 +61,12 @@ impl CliCommandBuilder {
             name: self.name.clone(),
             description: self.description.clone(),
             version: self.version.clone(),
-            optional: self.optional.clone(),
+            optional: self.optional,
             arguments: self.arguments.clone(),
             subcommands: self.subcommands.clone(),
             options: self.options.clone(),
             action: self.action.unwrap_or(|args: HashMap<String, Vec<String>>| {
-                println!("Command executed with arguments: {:?}", args);
+                println!("Command executed with arguments: {args:?}");
             }),
         }
     }
@@ -113,7 +116,7 @@ impl CliCommand {
         if let Some(description) = &self.description {
             println!();
             println!("DESCRIPTION");
-            println!("    {}", description); // todo dynamic padding
+            println!("    {description}"); // todo dynamic padding
         }
 
         println!();
@@ -131,7 +134,7 @@ impl CliCommand {
             println!();
             println!("COMMANDS");
             for subcommand in &self.subcommands {
-                let cmd_name = if subcommand.optional { format!("[{}]", subcommand.name) } else { format!("{}", subcommand.name) };
+                let cmd_name = if subcommand.optional { format!("[{}]", subcommand.name) } else { subcommand.name.to_string() };
                 println!("    {} - {}", cmd_name, subcommand.description.as_deref().unwrap_or(""));
             }
             println!();
@@ -149,7 +152,7 @@ impl CliCommand {
                 } else {
                     format!("--{} <value>", option.name)
                 };
-                let short_name = option.short_name.as_ref().map_or(String::new(), |s| format!("-{}, ", s));
+                let short_name = option.short_name.as_ref().map_or(String::new(), |s| format!("-{s}, "));
                 println!("    {}{}, {}", short_name, name, option.description.as_deref().unwrap_or(""));
             }
         }
@@ -166,12 +169,11 @@ pub struct CliCommandOption {
     pub name: String,
     pub short_name: Option<String>,
     pub is_flag: bool,
-    pub optional: bool,
     pub description: Option<String>,
 }
 
 fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
-    if env_args.len() < 1 {
+    if env_args.is_empty() {
         return command;
     }
 
@@ -211,8 +213,8 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
         } else {
             if previous_argument_definition.is_none() {
                 let argument_definition = command.arguments.get(index);
-                if argument_definition.is_some() {
-                    args.push((argument_definition.unwrap().clone(), Some(arg.clone())));
+                if let Some(argument_definition) = argument_definition {
+                    args.push((argument_definition.clone(), Some(arg.clone())));
                 }
             }
 
@@ -239,7 +241,7 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
 fn get_arguments_map(arguments: Vec<(String, Option<String>)>) -> HashMap<String, Vec<String>> {
     let mut args_hashmap: HashMap<String, Vec<String>> = HashMap::new();
     for arg in arguments {
-        args_hashmap.entry(arg.0).or_insert(Vec::new()).push(arg.1.unwrap_or_default());
+        args_hashmap.entry(arg.0).or_default().push(arg.1.unwrap_or_default());
     }
     args_hashmap
 }
@@ -249,23 +251,11 @@ fn search_command<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliComm
         return Some(command);
     }
 
-    for cmd in &command.subcommands {
-        if cmd.name == name {
-            return Some(cmd);
-        }
-    }
-
-    None
+    command.subcommands.iter().find(|&cmd| cmd.name == name)
 }
 
 fn search_command_options<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliCommandOption> {
-    for option in &command.options {
-        if option.name == name || option.short_name.as_deref() == Some(name) {
-            return Some(option);
-        }
-    }
-
-    None
+    command.options.iter().find(|&option| option.name == name || option.short_name.as_deref() == Some(name))
 }
 
 fn search_for_help_flag(env_args: Vec<String>) -> bool {
