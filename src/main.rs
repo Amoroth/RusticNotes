@@ -8,6 +8,7 @@ const ROOT_VERSION: &str = "0.1.0";
 
 fn main() {
     // todo add variadic positional argument
+    // todo support aliases, for example "n" for "new", "l" or "ls" for "list", "rm" or "del" for "delete" etc.
     let cli: CliCommand = CliCommandBuilder::default()
         .set_name("RusticNotes")
         .set_version(ROOT_VERSION)
@@ -27,10 +28,8 @@ fn main() {
                     } else {
                         eprintln!("Error: Note name is required.");
                     }
-                })
-                .build(),
-        )
-        .add_subcommand(
+                }).build(),
+        ).add_subcommand(
             &CliCommandBuilder::default()
                 .set_name("list")
                 .set_description("List all notes")
@@ -45,10 +44,8 @@ fn main() {
                             println!("{}. {}", note.id, note.content);
                         }
                     }
-                })
-                .build(),
-        )
-        .add_subcommand(
+                }).build(),
+        ).add_subcommand(
             &CliCommandBuilder::default()
                 .set_name("get")
                 .set_description("Get a single note by its id")
@@ -68,9 +65,31 @@ fn main() {
                     } else {
                         eprintln!("Error: Note id is required.");
                     }
-                })
-                .build(),
-        )
-        .build();
+                }).build(),
+        ).add_subcommand(
+            &CliCommandBuilder::default()
+                .set_name("delete")
+                .set_description("Delete a single note by its id")
+                .set_optional(false)
+                .add_argument("id")
+                .set_action(|args: HashMap<String, Vec<String>>| {
+                    if let Some(id_str) = args.get("id").and_then(|v| v.last()) {
+                        if let Ok(id) = id_str.parse::<u32>() {
+                            if let Some(_) = notes::get_note_by_id(id) {
+                                notes::remove_note_by_id(id);
+                            } else {
+                                eprintln!("Note with id {id} not found.");
+                            }
+                        } else {
+                            eprintln!("Invalid id: {id_str}");
+                        }
+                    } else {
+                        eprintln!("Error: Note id is required.");
+                    }
+                }).build(),
+        ).build();
     cli.run(env::args());
 }
+
+// todo better error handling
+// todo add tests
