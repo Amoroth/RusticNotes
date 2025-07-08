@@ -6,6 +6,7 @@ pub struct CliCommandBuilder {
     description: Option<String>,
     version: Option<String>,
     optional: bool,
+    arguments: Vec<String>,
     subcommands: Vec<CliCommand>,
     options: Vec<CliCommandOption>,
     action: Option<fn(HashMap<String, Vec<String>>)>,
@@ -32,6 +33,11 @@ impl CliCommandBuilder {
         self
     }
 
+    pub fn add_argument(&mut self, argument: &str) -> &mut Self {
+        self.arguments.push(argument.to_string());
+        self
+    }
+
     pub fn add_subcommand(&mut self, subcommand: &CliCommand) -> &mut Self {
         self.subcommands.push(subcommand.clone());
         self
@@ -53,6 +59,7 @@ impl CliCommandBuilder {
             description: self.description.clone(),
             version: self.version.clone(),
             optional: self.optional.clone(),
+            arguments: self.arguments.clone(),
             subcommands: self.subcommands.clone(),
             options: self.options.clone(),
             action: self.action.unwrap_or(|args: HashMap<String, Vec<String>>| {
@@ -69,6 +76,7 @@ pub struct CliCommand {
     pub description: Option<String>,
     pub version: Option<String>,
     pub optional: bool,
+    pub arguments: Vec<String>,
     pub subcommands: Vec<CliCommand>,
     pub options: Vec<CliCommandOption>,
     pub action: fn(HashMap<String, Vec<String>>),
@@ -76,19 +84,26 @@ pub struct CliCommand {
 
 impl CliCommand {
     pub fn run(&self, args: env::Args) {
-        let env_args: Vec<String> = args.collect();
+        let env_args: Vec<String> = args.skip(1).collect();
         let command = select_command(env_args.clone(), self);
 
-        if search_for_help(env_args.clone()) {
+        if search_for_help_flag(env_args.clone()) {
             self.get_version();
             command.get_help();
             return;
         }
 
-        if search_for_version(env_args.clone()) {
-            command.get_version();
+        if search_for_version_flag(env_args.clone()) {
+            self.get_version();
             return;
         }
+
+        // remove arguments that choose a subcommand
+        let command_index = env_args.iter().position(|arg| *arg == command.name).unwrap_or(0);
+        let env_args: Vec<String> = env_args.into_iter().enumerate()
+            .filter(|(index, arg)| arg.starts_with("-") || *index > command_index)
+            .map(|(_, arg)| arg)
+            .collect();
 
         let arguments = collect_arguments(env_args, command);
         (command.action)(get_arguments_map(arguments));
@@ -155,14 +170,14 @@ pub struct CliCommandOption {
     pub description: Option<String>,
 }
 
-fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
+fn select_command(mut env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
     if env_args.len() < 2 {
         return command;
     }
 
     let mut cmd = command;
 
-    for arg in env_args.clone().into_iter().skip(1) {
+    for arg in env_args.clone() {
         if !arg.starts_with("-") {
             if let Some(subcommand) = search_command(&arg, cmd) {
                 cmd = subcommand;
@@ -178,7 +193,7 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
     let mut args: Vec<(String, Option<String>)> = vec![];
     let mut previous_argument_definition: Option<&CliCommandOption> = None;
 
-    for arg in env_args.clone().into_iter().skip(1) {
+    for (index, arg) in env_args.clone().into_iter().enumerate() {
         if arg.starts_with("--") {
             let arg_key = arg.trim_start_matches("--").to_string();
             let option_definition = search_command_options(arg_key.as_str(), command);
@@ -194,8 +209,16 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
                 previous_argument_definition = option_definition;
             }
         } else {
+            if previous_argument_definition.is_none() {
+                let argument_definition = command.arguments.get(index);
+                if argument_definition.is_some() {
+                    args.push((argument_definition.unwrap().clone(), Some(arg.clone())));
+                }
+            }
+
             if previous_argument_definition.is_some() && !previous_argument_definition.unwrap().is_flag {
                 args.last_mut().unwrap().1 = Some(arg.clone());
+                previous_argument_definition = None;
             }
         };
     }
@@ -245,10 +268,10 @@ fn search_command_options<'a>(name: &str, command: &'a CliCommand) -> Option<&'a
     None
 }
 
-fn search_for_help(env_args: Vec<String>) -> bool {
+fn search_for_help_flag(env_args: Vec<String>) -> bool {
     env_args.iter().any(|arg| arg == "--help" || arg == "-h")
 }
 
-fn search_for_version(env_args: Vec<String>) -> bool {
+fn search_for_version_flag(env_args: Vec<String>) -> bool {
     env_args.iter().any(|arg| arg == "--version" || arg == "-V")
 }

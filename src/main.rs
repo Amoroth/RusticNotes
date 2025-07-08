@@ -54,6 +54,7 @@ fn main() {
                         .set_description("An example new command to demonstrate CLI parsing")
                         .set_version("0.1.0")
                         .set_optional(true)
+                        .add_argument("note")
                         .add_option(
                             &CliCommandOption {
                                 name: "crap".to_string(),
