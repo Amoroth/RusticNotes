@@ -42,7 +42,7 @@ fn main() {
                     } else {
                         println!("Notes:");
                         for note in notes {
-                            println!("- {}", note.content);
+                            println!("{}. {}", note.id, note.content);
                         }
                     }
                 })

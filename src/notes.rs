@@ -4,12 +4,13 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RusticNote {
+    pub id: u32,
     pub content: String,
 }
 
 impl RusticNote {
     pub fn new(content: String) -> Self {
-        RusticNote { content }
+        RusticNote { id: get_next_id(), content }
     }
 }
 
@@ -45,4 +46,15 @@ pub fn load_all_notes() -> Vec<RusticNote> {
         Ok(data) => serde_json::from_str(&data).unwrap_or_else(|_| vec![]),
         Err(_) => vec![],
     }
+}
+
+pub fn get_next_id() -> u32 {
+    let notes = load_all_notes();
+    let mut biggest_id = 0;
+    for note in notes {
+        if note.id > biggest_id {
+            biggest_id = note.id;
+        }
+    }
+    biggest_id + 1
 }
