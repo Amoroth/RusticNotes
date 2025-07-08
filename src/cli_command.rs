@@ -119,7 +119,7 @@ impl CliCommand {
         println!();
         println!("USAGE");
         // todo if root can be called without commands, add [] to COMMAND
-        println!("    $ {} COMMAND [OPTIONS]", self.name);
+        println!("    $ {}{}{}", self.name, if self.subcommands.is_empty() { "" } else { " COMMAND" }, if self.options.is_empty() { "" } else { " [OPTIONS]" });
 
         if false {
             println!();
