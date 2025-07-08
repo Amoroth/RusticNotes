@@ -30,6 +30,24 @@ fn main() {
                 })
                 .build(),
         )
+        .add_subcommand(
+            &CliCommandBuilder::default()
+                .set_name("list")
+                .set_description("List all notes")
+                .set_optional(false)
+                .set_action(|_| {
+                    let notes = notes::load_all_notes();
+                    if notes.is_empty() {
+                        println!("No notes found.");
+                    } else {
+                        println!("Notes:");
+                        for note in notes {
+                            println!("- {}", note.content);
+                        }
+                    }
+                })
+                .build(),
+        )
         .build();
     cli.run(env::args());
 }
