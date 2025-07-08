@@ -170,7 +170,7 @@ pub struct CliCommandOption {
     pub description: Option<String>,
 }
 
-fn select_command(mut env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
+fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
     if env_args.len() < 2 {
         return command;
     }
