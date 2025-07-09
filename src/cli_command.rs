@@ -51,7 +51,6 @@ impl CliCommandBuilder {
         self
     }
 
-    #[allow(dead_code)]
     pub fn add_option(&mut self, option: &CliCommandOption) -> &mut Self {
         self.options.push(option.clone());
         self
