@@ -72,3 +72,11 @@ pub fn get_next_id() -> u32 {
     }
     biggest_id + 1
 }
+
+// realistically, i should use something like ripgrep here
+pub fn slow_search(query: &str) -> Vec<RusticNote> {
+    let notes = load_all_notes();
+    notes.into_iter()
+        .filter(|note| note.content.contains(query))
+        .collect()
+}
