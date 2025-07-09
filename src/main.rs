@@ -2,7 +2,7 @@ mod cli_command;
 mod notes;
 
 use std::{collections::HashMap, env};
-use cli_command::{CliCommandBuilder, CliCommand};
+use cli_command::{CliCommandBuilder, CliCommand, CliCommandOption};
 
 const ROOT_VERSION: &str = "0.1.0";
 
@@ -19,11 +19,23 @@ fn main() {
                 .set_description("Create a new note")
                 .set_optional(false)
                 .add_argument("note")
+                .add_option(
+                    &CliCommandOption {
+                        name: "tag".to_string(),
+                        short_name: Some("t".to_string()),
+                        description: Some("Add a tag to the note".to_string()),
+                        is_flag: false
+                    }
+                )
                 .set_action(|args: HashMap<String, Vec<String>>| {
                     if let Some(note) = args.get("note") {
                         let note_content = note.last().unwrap_or(&String::from("")).to_string();
                         println!("Creating new note: {note_content}");
-                        let new_note = notes::RusticNote::new(note_content.clone());
+                        let tags: Vec<String> = args.get("tag").unwrap_or(&vec![]).clone();
+                        if !tags.is_empty() {
+                            println!("With tags: {tags:?}");
+                        }
+                        let new_note = notes::RusticNote::new(note_content.clone(), tags);
                         notes::save_note(&new_note);
                     } else {
                         eprintln!("Error: Note name is required.");

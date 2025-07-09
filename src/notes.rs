@@ -6,11 +6,12 @@ use serde::{Serialize, Deserialize};
 pub struct RusticNote {
     pub id: u32,
     pub content: String,
+    pub tags: Vec<String>
 }
 
 impl RusticNote {
-    pub fn new(content: String) -> Self {
-        RusticNote { id: get_next_id(), content }
+    pub fn new(content: String, tags: Vec<String>) -> Self {
+        RusticNote { id: get_next_id(), content, tags }
     }
 }
 
@@ -73,7 +74,7 @@ pub fn get_next_id() -> u32 {
     biggest_id + 1
 }
 
-// realistically, i should use something like ripgrep here
+// realistically, i should use something like ripgrep here, read up on Boyer–Moore string search algo and maybe implement it?
 pub fn slow_search(query: &str) -> Vec<RusticNote> {
     let notes = load_all_notes();
     notes.into_iter()
