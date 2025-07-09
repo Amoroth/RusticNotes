@@ -8,7 +8,6 @@ const ROOT_VERSION: &str = "0.1.0";
 
 fn main() {
     // todo add variadic positional argument
-    // todo support aliases, for example "n" for "new", "l" or "ls" for "list", "rm" or "del" for "delete" etc.
     let cli: CliCommand = CliCommandBuilder::default()
         .set_name("RusticNotes")
         .set_version(ROOT_VERSION)
@@ -89,6 +88,27 @@ fn main() {
                         }
                     } else {
                         eprintln!("Error: Note id is required.");
+                    }
+                }).build(),
+        ).add_subcommand(
+            &CliCommandBuilder::default()
+                .set_name("search")
+                .set_description("Search for a note by a query string")
+                .set_optional(false)
+                .add_argument("query")
+                .set_action(|args: HashMap<String, Vec<String>>| {
+                    if let Some(query) = args.get("query").and_then(|v| v.last()) {
+                        let notes = notes::slow_search(query);
+                        if notes.is_empty() {
+                            println!("No notes found.");
+                        } else {
+                            println!("Notes:");
+                            for note in notes {
+                                println!("{}. {}", note.id, note.content);
+                            }
+                        }
+                    } else {
+                        eprintln!("Error: Query is required.");
                     }
                 }).build(),
         ).build();
