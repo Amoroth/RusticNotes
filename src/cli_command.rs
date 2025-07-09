@@ -5,6 +5,7 @@ type CliCommandAction = fn(HashMap<String, Vec<String>>);
 #[derive(Default)]
 pub struct CliCommandBuilder {
     name: String,
+    aliases: Vec<String>,
     description: Option<String>,
     version: Option<String>,
     optional: bool,
@@ -17,6 +18,11 @@ pub struct CliCommandBuilder {
 impl CliCommandBuilder {
     pub fn set_name(&mut self, name: &str) -> &mut Self {
         self.name = name.to_string();
+        self
+    }
+
+    pub fn add_alias(&mut self, alias: &str) -> &mut Self {
+        self.aliases.push(alias.to_string());
         self
     }
 
@@ -59,6 +65,7 @@ impl CliCommandBuilder {
     pub fn build(&self) -> CliCommand {
         CliCommand {
             name: self.name.clone(),
+            aliases: self.aliases.clone(),
             description: self.description.clone(),
             version: self.version.clone(),
             optional: self.optional,
@@ -76,6 +83,7 @@ impl CliCommandBuilder {
 #[derive(Clone)]
 pub struct CliCommand {
     pub name: String,
+    pub aliases: Vec<String>,
     pub description: Option<String>,
     pub version: Option<String>,
     pub optional: bool,
@@ -251,7 +259,7 @@ fn search_command<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliComm
         return Some(command);
     }
 
-    command.subcommands.iter().find(|&cmd| cmd.name == name)
+    command.subcommands.iter().find(|&cmd| cmd.name == name || cmd.aliases.contains(&name.to_string()))
 }
 
 fn search_command_options<'a>(name: &str, command: &'a CliCommand) -> Option<&'a CliCommandOption> {

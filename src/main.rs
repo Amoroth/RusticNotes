@@ -16,6 +16,7 @@ fn main() {
         .add_subcommand(
             &CliCommandBuilder::default()
                 .set_name("new")
+                .add_alias("add")
                 .set_description("Create a new note")
                 .set_optional(false)
                 .add_argument("note")
@@ -32,6 +33,7 @@ fn main() {
         ).add_subcommand(
             &CliCommandBuilder::default()
                 .set_name("list")
+                .add_alias("ls")
                 .set_description("List all notes")
                 .set_optional(false)
                 .set_action(|_| {
@@ -69,6 +71,8 @@ fn main() {
         ).add_subcommand(
             &CliCommandBuilder::default()
                 .set_name("delete")
+                .add_alias("remove")
+                .add_alias("rm")
                 .set_description("Delete a single note by its id")
                 .set_optional(false)
                 .add_argument("id")
