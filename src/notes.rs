@@ -1,5 +1,4 @@
-use std::io::Write;
-
+use std::{io::Write, path::Path};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -16,10 +15,27 @@ impl RusticNote {
 }
 
 pub fn save_notes(notes: Vec<RusticNote>) {
+    let config = get_config();
+    let notes_directory = Path::new(&config.notes_directory);
+
+    match notes_directory.try_exists() {
+        Ok(true) => {},
+        Ok(false) => {
+            if let Err(e) = std::fs::create_dir_all(notes_directory) {
+                eprintln!("Error creating notes directory: {e}");
+                return;
+            }
+        },
+        Err(e) => {
+            eprintln!("Error checking notes directory: {e}");
+            return;
+        },
+    }
+
     // todo save incrementally, don't overwrite whole file on every save
     // idea: save offsets for every note and update just the changed note
     let serialized_notes = serde_json::to_string(&notes).unwrap();
-    match std::fs::File::create("notes.json") {
+    match std::fs::File::create(notes_directory.join("notes.json")) {
         Ok(mut file) => {
             if let Err(e) = file.write_all(serialized_notes.as_bytes()) {
                 eprintln!("Error writing to file: {e}");
@@ -46,7 +62,14 @@ pub fn save_note(note: &RusticNote) {
 }
 
 pub fn load_all_notes() -> Vec<RusticNote> {
-    match std::fs::read_to_string("notes.json") {
+    let config = get_config();
+    let notes_directory = Path::new(&config.notes_directory);
+
+    if !notes_directory.exists() {
+        return vec![];
+    }
+
+    match std::fs::read_to_string(notes_directory.join("notes.json")) {
         Ok(data) => serde_json::from_str(&data).unwrap_or_else(|_| vec![]),
         Err(_) => vec![],
     }
@@ -80,4 +103,24 @@ pub fn slow_search(query: &str) -> Vec<RusticNote> {
     notes.into_iter()
         .filter(|note| note.content.contains(query))
         .collect()
+}
+
+// todo move to a separate file
+
+#[derive(Deserialize)]
+pub struct RusticConfig {
+    pub notes_directory: String,
+}
+
+fn default_config() -> RusticConfig {
+    RusticConfig {
+        notes_directory: "".to_string(),
+    }
+}
+
+pub fn get_config() -> RusticConfig {
+    match std::fs::read_to_string("config.json") {
+        Ok(data) => toml::from_str(&data).unwrap_or_else(|_| default_config()),
+        Err(_) => default_config(),
+    }
 }
