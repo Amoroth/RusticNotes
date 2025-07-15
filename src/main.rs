@@ -26,8 +26,7 @@ fn main() {
                         description: Some("Add a tag to the note".to_string()),
                         is_flag: false
                     }
-                )
-                .set_action(|args: HashMap<String, Vec<String>>| {
+                ).set_action(|args: HashMap<String, Vec<String>>| {
                     if let Some(note) = args.get("note") {
                         let note_content = note.last().unwrap_or(&String::from("")).to_string();
                         println!("Creating new note: {note_content}");
@@ -47,11 +46,24 @@ fn main() {
                 .add_alias("ls")
                 .set_description("List all notes")
                 .set_optional(false)
-                .set_action(|_| {
-                    let notes = notes::load_all_notes();
+                .add_option(
+                    &CliCommandOption {
+                        name: "tag".to_string(),
+                        short_name: Some("t".to_string()),
+                        description: Some("Search by a tag".to_string()),
+                        is_flag: false
+                    }
+                ).set_action(|args: HashMap<String, Vec<String>>| {
+                    let mut notes = notes::load_all_notes();
                     if notes.is_empty() {
                         println!("No notes found.");
                     } else {
+                        let tags = args.get("tag").unwrap_or(&vec![]).clone();
+
+                        if !tags.is_empty() {
+                            notes.retain(|note| note.tags.iter().any(|tag| tags.contains(tag)));
+                        }
+
                         println!("Notes:");
                         for note in notes {
                             println!("{}. {}", note.id, note.content);
