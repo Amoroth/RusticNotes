@@ -57,14 +57,23 @@ pub fn save_note(note: &RusticNote) {
     println!("Serialized note: {note_json}");
 
     let mut saved_notes: Vec<RusticNote> = load_all_notes();
+
+    let exiting_note = saved_notes.clone().into_iter().enumerate().find(|(_, n)| n.id == note.id);
     saved_notes.push(note.clone());
+
+    if exiting_note.is_some() {
+        let last_index = saved_notes.len() - 1;
+        saved_notes.swap(exiting_note.unwrap().0, last_index);
+        saved_notes.pop();
+    }
+
     save_notes(saved_notes);
 }
 
 pub fn load_all_notes() -> Vec<RusticNote> {
     let config = get_config();
     let notes_directory = Path::new(&config.notes_directory);
-
+    
     if !notes_directory.exists() {
         return vec![];
     }
@@ -110,17 +119,22 @@ pub fn slow_search(query: &str) -> Vec<RusticNote> {
 #[derive(Deserialize)]
 pub struct RusticConfig {
     pub notes_directory: String,
+    pub editor: Option<String>,
 }
 
 fn default_config() -> RusticConfig {
+    println!("Using default configuration.");
     RusticConfig {
-        notes_directory: "".to_string(),
+        notes_directory: ".".to_string(),
+        editor: None,
     }
 }
 
 pub fn get_config() -> RusticConfig {
-    match std::fs::read_to_string("config.json") {
+    match std::fs::read_to_string("config.toml") {
         Ok(data) => toml::from_str(&data).unwrap_or_else(|_| default_config()),
         Err(_) => default_config(),
     }
 }
+
+// todo try to guess a default editor before returning None

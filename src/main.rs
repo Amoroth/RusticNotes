@@ -135,6 +135,69 @@ fn main() {
                         eprintln!("Error: Query is required.");
                     }
                 }).build(),
+        ).add_subcommand(
+            &CliCommandBuilder::default()
+                .set_name("edit")
+                .set_description("Edit a single note by its id")
+                .set_optional(false)
+                .add_argument("id")
+                .set_action(|args: HashMap<String, Vec<String>>| {
+                    let id_str = args.get("id").and_then(|v| v.last());
+                    let id = match id_str {
+                        Some(id) => match id.parse::<u32>() {
+                            Ok(id) => id,
+                            Err(_) => {
+                                eprintln!("Invalid id: {id}");
+                                return;
+                            }
+                        },
+                        None => {
+                            eprintln!("Error: Note id is required.");
+                            return;
+                        }
+                    };
+
+                    let mut note = match notes::get_note_by_id(id) {
+                        Some(note) => note,
+                        None => {
+                            eprintln!("Note with id {id} not found.");
+                            return;
+                        }
+                    };
+                    
+                    // save note to temporary file
+                    let temp_file_path = format!("/tmp/rustic_note_{}.txt", id);
+                    let mut file = match std::fs::File::create(&temp_file_path) {
+                        Ok(file) => file,
+                        Err(e) => {
+                            eprintln!("Error creating temporary file: {e}");
+                            return;
+                        }
+                    };
+                    if let Err(e) = serde_json::to_writer(&mut file, &note.content) {
+                        eprintln!("Error writing note to temporary file: {e}");
+                        return;
+                    }
+
+                    std::process::Command::new("vim")
+                        .arg(&temp_file_path)
+                        .spawn()
+                        .expect("Error: Failed to run editor")
+                        .wait()
+                        .expect("Error: Editor returned a non-zero status");
+                    
+                    // read the edited note back
+                    let edited_note_content = match std::fs::read_to_string(&temp_file_path) {
+                        Ok(content) => content,
+                        Err(e) => {
+                            eprintln!("Error reading edited note: {e}");
+                            return;
+                        }
+                    };
+
+                    note.content = edited_note_content;
+                    notes::save_note(&note);
+                }).build(),
         ).build();
     cli.run(env::args());
 }
@@ -142,3 +205,7 @@ fn main() {
 // todo better error handling
 // todo add tests
 // todo save notes in markdown/org-mode files with json as a manifest/metadata
+// todo edit note tags and others
+// todo make opening editor optional in case you want to edit other properties?
+// todo projects support and persistant switching between them
+// todo active tui
