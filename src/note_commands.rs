@@ -141,7 +141,21 @@ pub fn build_edit_command() -> CliCommand {
         .set_description("Edit a single note by its id")
         .set_optional(false)
         .add_argument("id")
-        .set_action(|args: HashMap<String, Vec<String>>| {
+        .add_option(
+            &CliCommandOption {
+                name: "message".to_string(),
+                short_name: Some("m".to_string()),
+                description: Some("Replace note by this string. If --interactive option is passed, it is discarded.".to_string()),
+                is_flag: false
+            }
+        ).add_option(
+            &CliCommandOption {
+                name: "interactive".to_string(),
+                short_name: Some("i".to_string()),
+                description: Some("Edit note interactivly through an external editor. One has to be provided through config or it will fail.".to_string()),
+                is_flag: false
+            }
+        ).set_action(|args: HashMap<String, Vec<String>>| {
             let id_str = args.get("id").and_then(|v| v.last());
             let id = match id_str {
                 Some(id) => match id.parse::<u32>() {
@@ -165,43 +179,47 @@ pub fn build_edit_command() -> CliCommand {
                 }
             };
 
-            let config = notes::get_config();
-            let editor = match config.editor {
-                Some(e) => e,
-                None => {
-                    eprintln!("No editor available.");
+            let edited_note_content = if args.contains_key("interactive") || !args.contains_key("message") {
+                let config = notes::get_config();
+                let editor = match config.editor {
+                    Some(e) => e,
+                    None => {
+                        eprintln!("No editor available.");
+                        return;
+                    }
+                };
+                
+                // save note to temporary file
+                let temp_file_path = format!("/tmp/rustic_note_{}.txt", id);
+                let mut file = match std::fs::File::create(&temp_file_path) {
+                    Ok(file) => file,
+                    Err(e) => {
+                        eprintln!("Error creating temporary file: {e}");
+                        return;
+                    }
+                };
+                if let Err(e) = file.write_all(note.content.trim().as_bytes()) {
+                    eprintln!("Error writing note to temporary file: {e}");
                     return;
                 }
-            };
-            
-            // save note to temporary file
-            let temp_file_path = format!("/tmp/rustic_note_{}.txt", id);
-            let mut file = match std::fs::File::create(&temp_file_path) {
-                Ok(file) => file,
-                Err(e) => {
-                    eprintln!("Error creating temporary file: {e}");
-                    return;
+    
+                std::process::Command::new(editor)
+                    .arg(&temp_file_path)
+                    .spawn()
+                    .expect("Error: Failed to run editor")
+                    .wait()
+                    .expect("Error: Editor returned a non-zero status");
+                
+                // read the edited note back
+                match std::fs::read_to_string(&temp_file_path) {
+                    Ok(content) => content,
+                    Err(e) => {
+                        eprintln!("Error reading edited note: {e}");
+                        return;
+                    }
                 }
-            };
-            if let Err(e) = file.write_all(note.content.trim().as_bytes()) {
-                eprintln!("Error writing note to temporary file: {e}");
-                return;
-            }
-
-            std::process::Command::new(editor)
-                .arg(&temp_file_path)
-                .spawn()
-                .expect("Error: Failed to run editor")
-                .wait()
-                .expect("Error: Editor returned a non-zero status");
-            
-            // read the edited note back
-            let edited_note_content = match std::fs::read_to_string(&temp_file_path) {
-                Ok(content) => content,
-                Err(e) => {
-                    eprintln!("Error reading edited note: {e}");
-                    return;
-                }
+            } else {
+                args.get("message").and_then(|v| v.last()).unwrap_or(&String::new()).to_string()
             };
 
             note.content = edited_note_content.trim().to_string();
