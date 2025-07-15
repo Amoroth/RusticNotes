@@ -233,6 +233,7 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
     }
 
     // check if all required arguments are present
+    // bug if a required subcommand is not present, it will display name of the first subcommand instead
     if !command.subcommands.is_empty() {
         for definition in &command.subcommands {
             if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {

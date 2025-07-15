@@ -141,3 +141,6 @@ fn main() {
 
 // todo better error handling
 // todo add tests
+// todo save notes in markdown/org-mode files with json as a manifest/metadata
+// todo configuration
+// todo save files in a common directory, e.g. ~/.config/rusticnotes/notes.json
