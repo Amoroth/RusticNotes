@@ -11,24 +11,71 @@ pub fn build_new_command() -> CliCommand {
         .add_argument("note")
         .add_option(
             &CliCommandOption {
+                name: "interactive".to_string(),
+                short_name: Some("i".to_string()),
+                description: Some("Create note interactivly through an external editor. One has to be provided through config or it will fail.".to_string()),
+                is_flag: false
+            }
+        )
+        .add_option(
+            &CliCommandOption {
                 name: "tag".to_string(),
                 short_name: Some("t".to_string()),
                 description: Some("Add a tag to the note".to_string()),
                 is_flag: false
             }
         ).set_action(|args: HashMap<String, Vec<String>>| {
-            if let Some(note) = args.get("note") {
-                let note_content = note.last().unwrap_or(&String::from("")).to_string();
-                println!("Creating new note: {note_content}");
-                let tags: Vec<String> = args.get("tag").unwrap_or(&vec![]).clone();
-                if !tags.is_empty() {
-                    println!("With tags: {tags:?}");
+            let note_content = if args.contains_key("interactive") || !args.contains_key("note") {
+                let config = notes::get_config();
+                let editor = match config.editor {
+                    Some(e) => e,
+                    None => {
+                        eprintln!("No editor available.");
+                        return;
+                    }
+                };
+                
+                // save note to temporary file
+                let temp_file_path = "/tmp/rustic_note_new.txt".to_string();
+                match std::fs::File::create(&temp_file_path) {
+                    Ok(file) => file,
+                    Err(e) => {
+                        eprintln!("Error creating temporary file: {e}");
+                        return;
+                    }
+                };
+    
+                std::process::Command::new(editor)
+                    .arg(&temp_file_path)
+                    .spawn()
+                    .expect("Error: Failed to run editor")
+                    .wait()
+                    .expect("Error: Editor returned a non-zero status");
+                
+                // read the edited note back
+                match std::fs::read_to_string(&temp_file_path) {
+                    Ok(content) => content,
+                    Err(e) => {
+                        eprintln!("Error reading edited note: {e}");
+                        return;
+                    }
                 }
-                let new_note = notes::RusticNote::new(note_content.clone(), tags);
-                notes::save_note(&new_note);
             } else {
-                eprintln!("Error: Note name is required.");
+                if let Some(note) = args.get("note") {
+                    note.last().unwrap_or(&String::from("")).to_string()
+                } else {
+                    eprintln!("Error: Note name is required.");
+                    return;
+                }
+            };
+
+            println!("Creating new note: {note_content}");
+            let tags: Vec<String> = args.get("tag").unwrap_or(&vec![]).clone();
+            if !tags.is_empty() {
+                println!("With tags: {tags:?}");
             }
+            let new_note = notes::RusticNote::new(note_content.trim().to_string(), tags);
+            notes::save_note(&new_note);
         }).build()
 }
 
