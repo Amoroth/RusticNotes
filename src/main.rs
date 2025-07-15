@@ -164,8 +164,18 @@ fn main() {
                             return;
                         }
                     };
+
+                    let config = notes::get_config();
+                    let editor = match config.editor {
+                        Some(e) => e,
+                        None => {
+                            eprintln!("No editor available.");
+                            return;
+                        }
+                    };
                     
                     // save note to temporary file
+                    // todo clean up old content
                     let temp_file_path = format!("/tmp/rustic_note_{}.txt", id);
                     let mut file = match std::fs::File::create(&temp_file_path) {
                         Ok(file) => file,
@@ -179,7 +189,7 @@ fn main() {
                         return;
                     }
 
-                    std::process::Command::new("vim")
+                    std::process::Command::new(editor)
                         .arg(&temp_file_path)
                         .spawn()
                         .expect("Error: Failed to run editor")
@@ -195,6 +205,7 @@ fn main() {
                         }
                     };
 
+                    // todo clean up new content
                     note.content = edited_note_content;
                     notes::save_note(&note);
                 }).build(),
