@@ -1,7 +1,7 @@
 mod cli_command;
 mod notes;
 
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, env, io::Write};
 use cli_command::{CliCommandBuilder, CliCommand, CliCommandOption};
 
 const ROOT_VERSION: &str = "0.1.0";
@@ -175,7 +175,6 @@ fn main() {
                     };
                     
                     // save note to temporary file
-                    // todo clean up old content
                     let temp_file_path = format!("/tmp/rustic_note_{}.txt", id);
                     let mut file = match std::fs::File::create(&temp_file_path) {
                         Ok(file) => file,
@@ -184,7 +183,7 @@ fn main() {
                             return;
                         }
                     };
-                    if let Err(e) = serde_json::to_writer(&mut file, &note.content) {
+                    if let Err(e) = file.write_all(note.content.trim().as_bytes()) {
                         eprintln!("Error writing note to temporary file: {e}");
                         return;
                     }
@@ -205,8 +204,7 @@ fn main() {
                         }
                     };
 
-                    // todo clean up new content
-                    note.content = edited_note_content;
+                    note.content = edited_note_content.trim().to_string();
                     notes::save_note(&note);
                 }).build(),
         ).build();
