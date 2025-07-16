@@ -26,38 +26,14 @@ pub fn build_new_command() -> CliCommand {
             }
         ).set_action(|args: HashMap<String, Vec<String>>| {
             let note_content = if args.contains_key("interactive") || !args.contains_key("note") {
-                let config = notes::get_config();
-                let editor = match config.editor {
-                    Some(e) => e,
-                    None => {
-                        eprintln!("No editor available.");
-                        return;
-                    }
-                };
-                
-                // save note to temporary file
-                let temp_file_path = "/tmp/rustic_note_new.txt".to_string();
-                match std::fs::File::create(&temp_file_path) {
-                    Ok(file) => file,
-                    Err(e) => {
-                        eprintln!("Error creating temporary file: {e}");
-                        return;
-                    }
-                };
-    
-                std::process::Command::new(editor)
-                    .arg(&temp_file_path)
-                    .spawn()
-                    .expect("Error: Failed to run editor")
-                    .wait()
-                    .expect("Error: Editor returned a non-zero status");
-                
-                // read the edited note back
-                match std::fs::read_to_string(&temp_file_path) {
+                match get_from_editor(None) {
                     Ok(content) => content,
-                    Err(e) => {
-                        eprintln!("Error reading edited note: {e}");
-                        return;
+                    Err(EditorOutputError) => {
+                        if args.contains_key("note") {
+                            args.get("note").and_then(|v| v.last()).unwrap_or(&String::new()).to_string()
+                        } else {
+                            return;
+                        }
                     }
                 }
             } else {
@@ -227,42 +203,14 @@ pub fn build_edit_command() -> CliCommand {
             };
 
             let edited_note_content = if args.contains_key("interactive") || !args.contains_key("message") {
-                let config = notes::get_config();
-                let editor = match config.editor {
-                    Some(e) => e,
-                    None => {
-                        eprintln!("No editor available.");
-                        return;
-                    }
-                };
-                
-                // save note to temporary file
-                let temp_file_path = format!("/tmp/rustic_note_{}.txt", id);
-                let mut file = match std::fs::File::create(&temp_file_path) {
-                    Ok(file) => file,
-                    Err(e) => {
-                        eprintln!("Error creating temporary file: {e}");
-                        return;
-                    }
-                };
-                if let Err(e) = file.write_all(note.content.trim().as_bytes()) {
-                    eprintln!("Error writing note to temporary file: {e}");
-                    return;
-                }
-    
-                std::process::Command::new(editor)
-                    .arg(&temp_file_path)
-                    .spawn()
-                    .expect("Error: Failed to run editor")
-                    .wait()
-                    .expect("Error: Editor returned a non-zero status");
-                
-                // read the edited note back
-                match std::fs::read_to_string(&temp_file_path) {
+                match get_from_editor(Some(note.content)) {
                     Ok(content) => content,
-                    Err(e) => {
-                        eprintln!("Error reading edited note: {e}");
-                        return;
+                    Err(EditorOutputError) => {
+                        if args.contains_key("message") {
+                            args.get("message").and_then(|v| v.last()).unwrap_or(&String::new()).to_string()
+                        } else {
+                            return;
+                        }
                     }
                 }
             } else {
@@ -272,4 +220,50 @@ pub fn build_edit_command() -> CliCommand {
             note.content = edited_note_content.trim().to_string();
             notes::save_note(&note);
         }).build()
+}
+
+struct EditorOutputError;
+
+fn get_from_editor(put_content: Option<String>) -> Result<String, EditorOutputError> {
+    let config = notes::get_config();
+    let editor = match config.editor {
+        Some(e) => e,
+        None => {
+            eprintln!("No editor available.");
+            return Err(EditorOutputError);
+        }
+    };
+    
+    // save note to temporary file
+    let temp_file_path = "/tmp/rustic_note_tmp.txt".to_string();
+    let mut file = match std::fs::File::create(&temp_file_path) {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("Error creating temporary file: {e}");
+            return Err(EditorOutputError);
+        }
+    };
+
+    if put_content.is_some() {
+        if let Err(e) = file.write_all(put_content.unwrap_or(String::new()).to_string().trim().as_bytes()) {
+            eprintln!("Error writing note to temporary file: {e}");
+            return Err(EditorOutputError);
+        }
+    }
+
+    std::process::Command::new(editor)
+        .arg(&temp_file_path)
+        .spawn()
+        .expect("Error: Failed to run editor")
+        .wait()
+        .expect("Error: Editor returned a non-zero status");
+    
+    // read the edited note back
+    match std::fs::read_to_string(&temp_file_path) {
+        Ok(content) => Ok(content),
+        Err(e) => {
+            eprintln!("Error reading edited note: {e}");
+            return Err(EditorOutputError);
+        }
+    }
 }
