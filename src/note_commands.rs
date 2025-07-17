@@ -142,19 +142,41 @@ pub fn build_search_command() -> CliCommand {
         .set_description("Search for a note by a query string")
         .set_optional(false)
         .add_argument("query")
+        .add_option(
+            &CliCommandOption {
+                name: "tag".to_string(),
+                short_name: Some("t".to_string()),
+                description: Some("Narrow search to a tag".to_string()),
+                is_flag: false
+            }
+        )
         .set_action(|args: HashMap<String, Vec<String>>| {
-            if let Some(query) = args.get("query").and_then(|v| v.last()) {
-                let notes = notes::slow_search(query);
-                if notes.is_empty() {
-                    println!("{}", print_utils::colorize(print_utils::Color::warning(), "No notes found."));
-                } else {
-                    println!("Notes:");
-                    for note in notes {
-                        println!("{}. {}", note.id, note.content);
-                    }
-                }
-            } else {
+            let query = args.get("query").and_then(|v| v.last());
+            let tags = args.get("tag");
+
+            if query.is_none() && tags.is_none() {
                 eprintln!("{}", print_utils::colorize(print_utils::Color::error(), "Error: Query is required."));
+            }
+
+            let mut all_notes = notes::load_all_notes();
+
+            // filter by tags
+            if let Some(tags_list) = tags {
+                all_notes = all_notes.into_iter().filter(|n| n.tags.iter().any(|t| tags_list.contains(t))).collect();
+            }
+
+            // filter by query
+            if let Some(query_string) = query {
+                all_notes = notes::slow_search(&all_notes, query_string)
+            }
+
+            if all_notes.is_empty() {
+                println!("{}", print_utils::colorize(print_utils::Color::warning(), "No notes found."));
+            } else {
+                println!("Notes:");
+                for note in all_notes {
+                    println!("{}. {}", note.id, note.content);
+                }
             }
         }).build()
 }
