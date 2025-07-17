@@ -1,5 +1,6 @@
 use std::{io::Write, path::Path};
 use serde::{Serialize, Deserialize};
+use crate::print_utils;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RusticNote {
@@ -22,12 +23,12 @@ pub fn save_notes(notes: Vec<RusticNote>) {
         Ok(true) => {},
         Ok(false) => {
             if let Err(e) = std::fs::create_dir_all(notes_directory) {
-                eprintln!("Error creating notes directory: {e}");
+                eprintln!("{}", print_utils::colorize(print_utils::Color::error(), format!("Error creating notes directory: {e}").as_str()));
                 return;
             }
         },
         Err(e) => {
-            eprintln!("Error checking notes directory: {e}");
+            eprintln!("{}", print_utils::colorize(print_utils::Color::error(), format!("Error checking notes directory: {e}").as_str()));
             return;
         },
     }
@@ -38,13 +39,13 @@ pub fn save_notes(notes: Vec<RusticNote>) {
     match std::fs::File::create(notes_directory.join("notes.json")) {
         Ok(mut file) => {
             if let Err(e) = file.write_all(serialized_notes.as_bytes()) {
-                eprintln!("Error writing to file: {e}");
+                eprintln!("{}", print_utils::colorize(print_utils::Color::error(), format!("Error writing to file: {e}").as_str()));
             } else {
-                println!("Note saved successfully.");
+                println!("{}", print_utils::colorize(print_utils::Color::success(), "Note saved successfully."));
             }
         }
         Err(e) => {
-            eprintln!("Error creating file: {e}");
+            eprintln!("{}", print_utils::colorize(print_utils::Color::error(), format!("Error creating file: {e}").as_str()));
         }
     }
 }
