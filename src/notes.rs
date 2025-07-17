@@ -108,9 +108,9 @@ pub fn get_next_id() -> u32 {
 }
 
 // realistically, i should use something like ripgrep here, read up on Boyer–Moore string search algo and maybe implement it?
-pub fn slow_search(query: &str) -> Vec<RusticNote> {
-    let notes = load_all_notes();
-    notes.into_iter()
+pub fn slow_search(notes: &Vec<RusticNote>, query: &str) -> Vec<RusticNote> {
+    notes.clone()
+        .into_iter()
         .filter(|note| note.content.contains(query))
         .collect()
 }
