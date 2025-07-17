@@ -28,6 +28,6 @@ fn main() {
 // todo add tests
 // todo save notes in markdown/org-mode files with json as a manifest/metadata
 // todo edit note tags and others
-// todo make opening editor optional in case you want to edit other properties?
 // todo projects support and persistant switching between them
 // todo active tui
+// todo if a note is long, truncate it during listing
