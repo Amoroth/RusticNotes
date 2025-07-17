@@ -1,5 +1,5 @@
 use crate::cli_command::{CliCommandBuilder, CliCommand, CliCommandOption};
-use crate::notes;
+use crate::{notes, print_utils};
 use std::{collections::HashMap, io::Write};
 
 pub fn build_new_command() -> CliCommand {
@@ -45,7 +45,7 @@ pub fn build_new_command() -> CliCommand {
                 }
             };
 
-            println!("Creating new note: {note_content}");
+            println!("{}", print_utils::colorize(print_utils::Color::new(100, 255, 100), &"Creating new note: {note_content}".to_string()));
             let tags: Vec<String> = args.get("tag").unwrap_or(&vec![]).clone();
             if !tags.is_empty() {
                 println!("With tags: {tags:?}");

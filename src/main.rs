@@ -1,6 +1,7 @@
 mod cli_command;
 mod notes;
 mod note_commands;
+mod print_utils;
 
 use std::env;
 use cli_command::{CliCommandBuilder, CliCommand};
