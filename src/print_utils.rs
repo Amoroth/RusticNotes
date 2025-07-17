@@ -44,10 +44,10 @@ impl Color {
     }
 }
 
-pub fn colorize(color: Color, input: &String) -> String {
-    String::from(format!("\x1b[38;2;{};{};{}m", color.red, color.green, color.blue)) + input.as_str() + "\x1b[0m"
+pub fn colorize(color: Color, input: &str) -> String {
+    String::from(format!("\x1b[38;2;{};{};{}m", color.red, color.green, color.blue)) + input + "\x1b[0m"
 }
 
-pub fn bg_colorize(color: Color, input: &String) -> String {
-    String::from(format!("\x1b[48;2;{};{};{}m", color.red, color.green, color.blue)) + input.as_str() + "\x1b[0m"
+pub fn bg_colorize(color: Color, input: &str) -> String {
+    String::from(format!("\x1b[48;2;{};{};{}m", color.red, color.green, color.blue)) + input + "\x1b[0m"
 }
