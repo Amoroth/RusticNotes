@@ -45,7 +45,8 @@ pub fn build_new_command() -> CliCommand {
                 }
             };
 
-            println!("{}", print_utils::colorize(print_utils::Color::new(100, 255, 100), &"Creating new note: {note_content}".to_string()));
+            // todo make it easier to write
+            println!("{}", print_utils::colorize(print_utils::Color::success(), &"Creating new note: {note_content}".to_string()));
             let tags: Vec<String> = args.get("tag").unwrap_or(&vec![]).clone();
             if !tags.is_empty() {
                 println!("With tags: {tags:?}");
@@ -69,6 +70,10 @@ pub fn build_list_command() -> CliCommand {
                 is_flag: false
             }
         ).set_action(|args: HashMap<String, Vec<String>>| {
+            println!("{}", print_utils::colorize(print_utils::Color::success(), &"Success message!".to_string()));
+            println!("{}", print_utils::colorize(print_utils::Color::warning(), &"Oh no, there was an error, but I've managed to lessen it.".to_string()));
+            println!("{}", print_utils::colorize(print_utils::Color::error(), &"Something went wrong!".to_string()));
+
             let mut notes = notes::load_all_notes();
             if notes.is_empty() {
                 println!("No notes found.");

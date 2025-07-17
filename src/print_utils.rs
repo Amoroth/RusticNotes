@@ -12,6 +12,36 @@ impl Color {
             blue: b
         }
     }
+
+    pub fn success() -> Color {
+        // todo involve config?
+        Color {
+            red: 166,
+            green: 227,
+            blue: 161
+        }
+    }
+
+    pub fn warning() -> Color {
+        // Color {
+        //     red: 250,
+        //     green: 179,
+        //     blue: 135
+        // }
+        Color {
+            red: 249,
+            green: 226,
+            blue: 175
+        }
+    }
+
+    pub fn error() -> Color {
+        Color {
+            red: 243,
+            green: 139,
+            blue: 168
+        }
+    }
 }
 
 pub fn colorize(color: Color, input: &String) -> String {
