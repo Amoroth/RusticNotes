@@ -108,6 +108,7 @@ impl CliCommand {
             return;
         }
 
+        // todo if argument is after options, it is not detected (?)
         // remove arguments that choose a subcommand
         let command_index = env_args.iter().position(|arg| *arg == command.name).unwrap_or(0);
         let env_args: Vec<String> = env_args.into_iter().enumerate()
