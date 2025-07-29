@@ -71,9 +71,7 @@ impl CliCommandBuilder {
             arguments: self.arguments.clone(),
             subcommands: self.subcommands.clone(),
             options: self.options.clone(),
-            action: self.action.unwrap_or(|args: HashMap<String, Vec<String>>| {
-                println!("Command executed with arguments: {args:?}");
-            }),
+            action: self.action,
         }
     }
 }
@@ -89,7 +87,7 @@ pub struct CliCommand {
     pub arguments: Vec<String>,
     pub subcommands: Vec<CliCommand>,
     pub options: Vec<CliCommandOption>,
-    pub action: fn(HashMap<String, Vec<String>>),
+    pub action: Option<fn(HashMap<String, Vec<String>>)>,
 }
 
 impl CliCommand {
@@ -116,7 +114,12 @@ impl CliCommand {
             .collect();
 
         let arguments = collect_arguments(env_args, command);
-        (command.action)(get_arguments_map(arguments));
+
+        if command.action.is_some() {
+            (command.action.unwrap())(get_arguments_map(arguments));
+        } else {
+            command.get_help();
+        }
     }
 
     pub fn get_help(&self) {
@@ -129,7 +132,7 @@ impl CliCommand {
         println!();
         println!("USAGE");
         // todo if root can be called without commands, add [] to COMMAND
-        println!("    $ {}{}{}", self.name, if self.subcommands.is_empty() { "" } else { " COMMAND" }, if self.options.is_empty() { "" } else { " [OPTIONS]" });
+        println!("    $ {}{}{}", self.name, if self.subcommands.is_empty() { "" } else { if self.action.is_none() { " [COMMAND]" } else { " COMMAND" } }, if self.options.is_empty() { "" } else { " [OPTIONS]" });
 
         if false {
             println!();
@@ -235,15 +238,16 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
     }
 
     // check if all required arguments are present
-    // bug if a required subcommand is not present, it will display name of the first subcommand instead
-    if !command.subcommands.is_empty() {
-        for definition in &command.subcommands {
-            if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {
-                eprintln!("Missing required argument: {}", definition.name);
-                std::process::exit(1);
-            }
-        }
-    }
+    // todo bug if a required subcommand is not present, it will display name of the first subcommand instead
+    // todo rewrite or rethink this better
+    // if !command.subcommands.is_empty() {
+    //     for definition in &command.subcommands {
+    //         if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {
+    //             eprintln!("Missing required argument: {}", definition.name);
+    //             std::process::exit(1);
+    //         }
+    //     }
+    // }
 
     args
 }

@@ -2,6 +2,7 @@ use crate::cli_command::{CliCommandBuilder, CliCommand, CliCommandOption};
 use crate::{notes, print_utils};
 use std::{collections::HashMap, io::Write};
 
+// todo if returned note is empty, dont save
 pub fn build_new_command() -> CliCommand {
     CliCommandBuilder::default()
         .set_name("new")
