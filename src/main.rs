@@ -10,6 +10,7 @@ const ROOT_VERSION: &str = "0.1.0";
 
 fn main() {
     // todo add variadic positional argument
+    // todo add option to builder, to let help not be action taken if no command is not specified and instead print error
     let cli: CliCommand = CliCommandBuilder::default()
         .set_name("RusticNotes")
         .set_version(ROOT_VERSION)
