@@ -108,7 +108,6 @@ impl CliCommand {
             return;
         }
 
-        // todo if argument is after options, it is not detected (?)
         // remove arguments that choose a subcommand
         let command_index = env_args.iter().position(|arg| *arg == command.name).unwrap_or(0);
         let env_args: Vec<String> = env_args.into_iter().enumerate()
@@ -202,8 +201,9 @@ fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
 fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String, Option<String>)> {
     let mut args: Vec<(String, Option<String>)> = vec![];
     let mut previous_argument_definition: Option<&CliCommandOption> = None;
+    let mut positional_index = 0;
 
-    for (index, arg) in env_args.clone().into_iter().enumerate() {
+    for arg in env_args.clone() {
         if arg.starts_with("--") {
             let arg_key = arg.trim_start_matches("--").to_string();
             let option_definition = search_command_options(arg_key.as_str(), command);
@@ -220,9 +220,10 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
             }
         } else {
             if previous_argument_definition.is_none() {
-                let argument_definition = command.arguments.get(index);
+                let argument_definition = command.arguments.get(positional_index);
                 if let Some(argument_definition) = argument_definition {
                     args.push((argument_definition.clone(), Some(arg.clone())));
+                    positional_index += 1;
                 }
             }
 
