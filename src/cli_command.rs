@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, env, option};
 
 type CliCommandAction = fn(HashMap<String, Vec<String>>);
 
@@ -122,6 +122,7 @@ impl CliCommand {
         }
     }
 
+    // todo refactor this to smaller functions
     pub fn get_help(&self) {
         let padding_width = 4;
 
@@ -155,15 +156,27 @@ impl CliCommand {
         if !self.options.is_empty() {
             println!();
             println!("OPTIONS");
-            // todo dynamic padding between names and descriptions
-            for option in &self.options {
+
+            // todo refactor this better!
+            let option_name = |option: &CliCommandOption| {
                 let name = if option.is_flag {
                     format!("--{}", option.name)
                 } else {
                     format!("--{} <value>", option.name)
                 };
                 let short_name = option.short_name.as_ref().map_or(String::new(), |s| format!("-{s}, "));
-                println!("{padding}{}{}, {}", short_name, name, option.description.as_deref().unwrap_or(""), padding = " ".repeat(padding_width));
+                format!("{short_name}{name}, ")
+            };
+
+            let longest_option_name = &self.options.iter()
+                .map(|option| option_name(option))
+                .max_by_key(|name| name.len())
+                .unwrap_or_default()
+                .len() + padding_width;
+
+            for option in &self.options {
+                let full_option_name = option_name(option);
+                println!("{padding}{full_option_name:<longest_option_name$}{description}", description = option.description.as_deref().unwrap_or(""), padding = " ".repeat(padding_width));
             }
         }
     }
