@@ -145,9 +145,17 @@ impl CliCommand {
         if !self.subcommands.is_empty() {
             println!();
             println!("COMMANDS");
+
+            // todo refactor this better!
+            let longest_command_name = self.subcommands.iter()
+                .map(|subcommand| if subcommand.optional { format!("[{}]", subcommand.name) } else { subcommand.name.to_string() })
+                .max_by_key(|name| name.len())
+                .unwrap_or_default()
+                .len();
+
             for subcommand in &self.subcommands {
                 let cmd_name = if subcommand.optional { format!("[{}]", subcommand.name) } else { subcommand.name.to_string() };
-                println!("{padding}{} - {}", cmd_name, subcommand.description.as_deref().unwrap_or(""), padding = " ".repeat(padding_width));
+                println!("{padding}{0:<longest_command_name$} - {1}", cmd_name, subcommand.description.as_deref().unwrap_or(""), padding = " ".repeat(padding_width));
             }
             println!();
             println!("{padding}Use \"{} COMMAND --help\" for more information about a command.", self.name, padding = " ".repeat(padding_width));
@@ -172,7 +180,7 @@ impl CliCommand {
                 .map(|option| option_name(option))
                 .max_by_key(|name| name.len())
                 .unwrap_or_default()
-                .len() + padding_width;
+                .len();
 
             for option in &self.options {
                 let full_option_name = option_name(option);
