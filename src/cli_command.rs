@@ -123,21 +123,22 @@ impl CliCommand {
     }
 
     pub fn get_help(&self) {
+        let padding_width = 4;
+
         if let Some(description) = &self.description {
             println!();
             println!("DESCRIPTION");
-            println!("    {description}"); // todo dynamic padding
+            println!("{padding}{description}", padding = " ".repeat(padding_width));
         }
 
         println!();
         println!("USAGE");
-        // todo if root can be called without commands, add [] to COMMAND
-        println!("    $ {}{}{}", self.name, if self.subcommands.is_empty() { "" } else { if self.action.is_none() { " [COMMAND]" } else { " COMMAND" } }, if self.options.is_empty() { "" } else { " [OPTIONS]" });
+        println!("{padding}$ {0}{1}{2}", self.name, if self.subcommands.is_empty() { "" } else { if self.action.is_none() { " [COMMAND]" } else { " COMMAND" } }, if self.options.is_empty() { "" } else { " [OPTIONS]" }, padding = " ".repeat(padding_width));
 
         if false {
             println!();
             println!("EXAMPLE");
-            println!("    {}", self.name); // placeholder, self.example
+            println!("{padding}{}", self.name, padding = " ".repeat(padding_width)); // placeholder, self.example
         }
 
         if !self.subcommands.is_empty() {
@@ -145,11 +146,10 @@ impl CliCommand {
             println!("COMMANDS");
             for subcommand in &self.subcommands {
                 let cmd_name = if subcommand.optional { format!("[{}]", subcommand.name) } else { subcommand.name.to_string() };
-                println!("    {} - {}", cmd_name, subcommand.description.as_deref().unwrap_or(""));
+                println!("{padding}{} - {}", cmd_name, subcommand.description.as_deref().unwrap_or(""), padding = " ".repeat(padding_width));
             }
             println!();
-            // todo if root can be called without commands, add [] to COMMAND
-            println!("    Use \"{} COMMAND --help\" for more information about a command.", self.name);
+            println!("{padding}Use \"{} COMMAND --help\" for more information about a command.", self.name, padding = " ".repeat(padding_width));
         }
 
         if !self.options.is_empty() {
@@ -163,7 +163,7 @@ impl CliCommand {
                     format!("--{} <value>", option.name)
                 };
                 let short_name = option.short_name.as_ref().map_or(String::new(), |s| format!("-{s}, "));
-                println!("    {}{}, {}", short_name, name, option.description.as_deref().unwrap_or(""));
+                println!("{padding}{}{}, {}", short_name, name, option.description.as_deref().unwrap_or(""), padding = " ".repeat(padding_width));
             }
         }
     }
