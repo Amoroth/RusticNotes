@@ -108,10 +108,10 @@ pub fn get_next_id() -> u32 {
 }
 
 // realistically, i should use something like ripgrep here, read up on Boyer–Moore string search algo and maybe implement it?
-pub fn slow_search(notes: &Vec<RusticNote>, query: &str) -> Vec<RusticNote> {
-    notes.clone()
-        .into_iter()
-        .filter(|note| note.content.contains(query))
+pub fn slow_search(notes: &[RusticNote], query: &str) -> Vec<RusticNote> {
+    notes.iter()
+        .filter(|&note| note.content.contains(query))
+        .cloned()
         .collect()
 }
 

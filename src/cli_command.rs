@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, option};
+use std::{collections::HashMap, env};
 
 type CliCommandAction = fn(HashMap<String, Vec<String>>);
 
@@ -56,7 +56,7 @@ impl CliCommandBuilder {
         self
     }
 
-    pub fn set_action(&mut self, action: fn(HashMap<String, Vec<String>>)) -> &mut Self {
+    pub fn set_action(&mut self, action: CliCommandAction) -> &mut Self {
         self.action = Some(action.to_owned());
         self
     }
@@ -87,7 +87,7 @@ pub struct CliCommand {
     pub arguments: Vec<String>,
     pub subcommands: Vec<CliCommand>,
     pub options: Vec<CliCommandOption>,
-    pub action: Option<fn(HashMap<String, Vec<String>>)>,
+    pub action: Option<CliCommandAction>,
 }
 
 impl CliCommand {
@@ -134,7 +134,7 @@ impl CliCommand {
 
         println!();
         println!("USAGE");
-        println!("{padding}$ {0}{1}{2}", self.name, if self.subcommands.is_empty() { "" } else { if self.action.is_none() { " [COMMAND]" } else { " COMMAND" } }, if self.options.is_empty() { "" } else { " [OPTIONS]" }, padding = " ".repeat(padding_width));
+        println!("{padding}$ {0}{1}{2}", self.name, if self.subcommands.is_empty() { "" } else if self.action.is_none() { " [COMMAND]" } else { " COMMAND" }, if self.options.is_empty() { "" } else { " [OPTIONS]" }, padding = " ".repeat(padding_width));
 
         if false {
             println!();
@@ -177,7 +177,7 @@ impl CliCommand {
             };
 
             let longest_option_name = &self.options.iter()
-                .map(|option| option_name(option))
+                .map(&option_name)
                 .max_by_key(|name| name.len())
                 .unwrap_or_default()
                 .len();

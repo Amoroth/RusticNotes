@@ -37,14 +37,12 @@ pub fn build_new_command() -> CliCommand {
                         }
                     }
                 }
+            } else if let Some(note) = args.get("note") {
+                note.last().unwrap_or(&String::from("")).to_string()
             } else {
-                if let Some(note) = args.get("note") {
-                    note.last().unwrap_or(&String::from("")).to_string()
-                } else {
-                    // todo make it easier to write
-                    eprintln!("{}", print_utils::colorize(print_utils::Color::error(), "Error: Note name is required."));
-                    return;
-                }
+                // todo make it easier to write
+                eprintln!("{}", print_utils::colorize(print_utils::Color::error(), "Error: Note name is required."));
+                return;
             };
 
             println!("Creating new note: {note_content}");
@@ -123,7 +121,7 @@ pub fn build_delete_command() -> CliCommand {
         .set_action(|args: HashMap<String, Vec<String>>| {
             if let Some(id_str) = args.get("id").and_then(|v| v.last()) {
                 if let Ok(id) = id_str.parse::<u32>() {
-                    if let Some(_) = notes::get_note_by_id(id) {
+                    if notes::get_note_by_id(id).is_some() {
                         notes::remove_note_by_id(id);
                     } else {
                         eprintln!("{}", print_utils::colorize(print_utils::Color::warning(), format!("Note with id {id} not found.").as_str()));
@@ -163,7 +161,7 @@ pub fn build_search_command() -> CliCommand {
 
             // filter by tags
             if let Some(tags_list) = tags {
-                all_notes = all_notes.into_iter().filter(|n| n.tags.iter().any(|t| tags_list.contains(t))).collect();
+                all_notes.retain(|n| n.tags.iter().any(|t| tags_list.contains(t)));
             }
 
             // filter by query
@@ -269,7 +267,7 @@ fn get_from_editor(put_content: Option<String>) -> Result<String, EditorOutputEr
     };
 
     if put_content.is_some() {
-        if let Err(e) = file.write_all(put_content.unwrap_or(String::new()).to_string().trim().as_bytes()) {
+        if let Err(e) = file.write_all(put_content.unwrap_or_default().to_string().trim().as_bytes()) {
             eprintln!("{}", print_utils::colorize(print_utils::Color::error(), format!("Error writing note to temporary file: {e}").as_str()));
             return Err(EditorOutputError);
         }
@@ -278,16 +276,16 @@ fn get_from_editor(put_content: Option<String>) -> Result<String, EditorOutputEr
     std::process::Command::new(editor)
         .arg(&temp_file_path)
         .spawn()
-        .expect(print_utils::colorize(print_utils::Color::error(), "Error: Failed to run editor").as_str())
+        .unwrap_or_else(|_| {panic!("{}", print_utils::colorize(print_utils::Color::error(), "Error: Failed to run editor"))})
         .wait()
-        .expect(print_utils::colorize(print_utils::Color::error(), "Error: Editor returned a non-zero status").as_str());
+        .unwrap_or_else(|_| {panic!("{}", print_utils::colorize(print_utils::Color::error(), "Error: Editor returned a non-zero status"))});
     
     // read the edited note back
     match std::fs::read_to_string(&temp_file_path) {
         Ok(content) => Ok(content),
         Err(e) => {
             eprintln!("{}", print_utils::colorize(print_utils::Color::error(), format!("Error reading edited note: {e}").as_str()));
-            return Err(EditorOutputError);
+            Err(EditorOutputError)
         }
     }
 }

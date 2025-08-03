@@ -5,6 +5,7 @@ pub struct Color {
 }
 
 impl Color {
+    #[allow(dead_code)]
     pub fn new(r: u8, g: u8, b: u8) -> Color {
         Color {
             red: r,
@@ -45,9 +46,10 @@ impl Color {
 }
 
 pub fn colorize(color: Color, input: &str) -> String {
-    String::from(format!("\x1b[38;2;{};{};{}m", color.red, color.green, color.blue)) + input + "\x1b[0m"
+    format!("\x1b[38;2;{};{};{}m", color.red, color.green, color.blue) + input + "\x1b[0m"
 }
 
+#[allow(dead_code)]
 pub fn bg_colorize(color: Color, input: &str) -> String {
-    String::from(format!("\x1b[48;2;{};{};{}m", color.red, color.green, color.blue)) + input + "\x1b[0m"
+    format!("\x1b[48;2;{};{};{}m", color.red, color.green, color.blue) + input + "\x1b[0m"
 }
