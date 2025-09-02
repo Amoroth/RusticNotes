@@ -32,3 +32,4 @@ fn main() {
 // todo projects support and persistant switching between them
 // todo active tui
 // todo if a note is long, truncate it during listing
+// todo expose api as a library for external usage

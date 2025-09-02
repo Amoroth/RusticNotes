@@ -1,5 +1,7 @@
 use std::{collections::HashMap, env};
 
+use serde::de;
+
 type CliCommandAction = fn(HashMap<String, Vec<String>>);
 
 #[derive(Default)]
@@ -122,70 +124,104 @@ impl CliCommand {
         }
     }
 
-    // todo refactor this to smaller functions
     pub fn get_help(&self) {
         let padding_width = 4;
 
+        self.print_help_description(padding_width);
+        self.print_help_usage(padding_width);
+        self.print_help_example(padding_width);
+        self.print_help_subcommands(padding_width);
+        self.print_help_options(padding_width);
+    }
+
+    fn print_help_description(&self, padding_width: usize) {
         if let Some(description) = &self.description {
             println!();
             println!("DESCRIPTION");
             println!("{padding}{description}", padding = " ".repeat(padding_width));
         }
+    }
 
+    fn print_help_usage(&self, padding_width: usize) {
         println!();
         println!("USAGE");
         println!("{padding}$ {0}{1}{2}", self.name, if self.subcommands.is_empty() { "" } else if self.action.is_none() { " [COMMAND]" } else { " COMMAND" }, if self.options.is_empty() { "" } else { " [OPTIONS]" }, padding = " ".repeat(padding_width));
+    }
 
+    fn print_help_example(&self, padding_width: usize) {
         if false {
             println!();
             println!("EXAMPLE");
             println!("{padding}{}", self.name, padding = " ".repeat(padding_width)); // placeholder, self.example
         }
+    }
 
-        if !self.subcommands.is_empty() {
-            println!();
-            println!("COMMANDS");
-
-            // todo refactor this better!
-            let longest_command_name = self.subcommands.iter()
-                .map(|subcommand| if subcommand.optional { format!("[{}]", subcommand.name) } else { subcommand.name.to_string() })
-                .max_by_key(|name| name.len())
-                .unwrap_or_default()
-                .len();
-
-            for subcommand in &self.subcommands {
-                let cmd_name = if subcommand.optional { format!("[{}]", subcommand.name) } else { subcommand.name.to_string() };
-                println!("{padding}{0:<longest_command_name$} - {1}", cmd_name, subcommand.description.as_deref().unwrap_or(""), padding = " ".repeat(padding_width));
-            }
-            println!();
-            println!("{padding}Use \"{} COMMAND --help\" for more information about a command.", self.name, padding = " ".repeat(padding_width));
+    fn print_help_subcommands(&self, padding_width: usize) {
+        if self.subcommands.is_empty() {
+            return;
         }
 
-        if !self.options.is_empty() {
-            println!();
-            println!("OPTIONS");
+        println!();
+        println!("COMMANDS");
 
-            // todo refactor this better!
-            let option_name = |option: &CliCommandOption| {
-                let name = if option.is_flag {
-                    format!("--{}", option.name)
+        let display_items: Vec<(String, &str)> = self.subcommands
+            .iter()
+            .map(|subcmd| {
+                let name = if subcmd.optional {
+                    format!("[{}]", subcmd.name)
                 } else {
-                    format!("--{} <value>", option.name)
+                    subcmd.name.clone()
                 };
+                let description = subcmd.description.as_deref().unwrap_or("");
+                (name, description)
+            })
+            .collect();
+
+        let longest_name_len = display_items
+            .iter()
+            .map(|(name, _)| name.len())
+            .max()
+            .unwrap_or(0);
+
+        let padding = " ".repeat(padding_width);
+        for (name, description) in &display_items {
+            println!("{padding}{name:<longest_name_len$} - {description}");
+        }
+        println!();
+        println!("{padding}Use \"{} COMMAND --help\" for more information about a command.", self.name, padding = " ".repeat(padding_width));
+    }
+
+    fn print_help_options(&self, padding_width: usize) {
+        if self.options.is_empty() {
+            return;
+        }
+
+        println!();
+        println!("OPTIONS");
+
+        let display_items: Vec<(String, &str)> = self.options
+            .iter()
+            .map(|option| {
                 let short_name = option.short_name.as_ref().map_or(String::new(), |s| format!("-{s}, "));
-                format!("{short_name}{name}, ")
-            };
+                let name = if option.is_flag {
+                    format!("{short_name}--{}, ", option.name)
+                } else {
+                    format!("{short_name}--{} <value>, ", option.name)
+                };
+                let description = option.description.as_deref().unwrap_or("");
+                (name, description)
+            })
+            .collect();
 
-            let longest_option_name = &self.options.iter()
-                .map(&option_name)
-                .max_by_key(|name| name.len())
-                .unwrap_or_default()
-                .len();
+        let longest_name_len = display_items
+            .iter()
+            .map(|(name, _)| name.len())
+            .max()
+            .unwrap_or(0);
 
-            for option in &self.options {
-                let full_option_name = option_name(option);
-                println!("{padding}{full_option_name:<longest_option_name$}{description}", description = option.description.as_deref().unwrap_or(""), padding = " ".repeat(padding_width));
-            }
+        let padding = " ".repeat(padding_width);
+        for (name, description) in &display_items {
+            println!("{padding}{name:<longest_name_len$}{description}");
         }
     }
 
@@ -261,10 +297,10 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
     // check if all required arguments are present
     // todo bug if a required subcommand is not present, it will display name of the first subcommand instead
     // todo rewrite or rethink this better
-    // if !command.subcommands.is_empty() {
+    // if !command.subcommands.is_empty() && command.action.is_none() {
     //     for definition in &command.subcommands {
-    //         if !definition.optional && !args.iter().any(|(name, _)| name == &definition.name) {
-    //             eprintln!("Missing required argument: {}", definition.name);
+    //         if !args.iter().any(|(name, _)| name == &definition.name) {
+    //             eprintln!("Missing required subcommand");
     //             std::process::exit(1);
     //         }
     //     }
