@@ -1,5 +1,5 @@
 use crate::cli_command::{CliCommandBuilder, CliCommand, CliCommandOption};
-use crate::{notes, print_utils};
+use crate::{notes, print_utils, config};
 use std::{collections::HashMap, io::Write};
 
 pub fn build_new_command() -> CliCommand {
@@ -246,7 +246,7 @@ pub fn build_edit_command() -> CliCommand {
 struct EditorOutputError;
 
 fn get_from_editor(put_content: Option<String>) -> Result<String, EditorOutputError> {
-    let config = notes::get_config();
+    let config = config::get_config();
     let editor = match config.editor {
         Some(e) => e,
         None => {

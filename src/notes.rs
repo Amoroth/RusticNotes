@@ -1,6 +1,6 @@
 use std::{io::Write, path::Path};
 use serde::{Serialize, Deserialize};
-use crate::print_utils;
+use crate::{print_utils, config};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RusticNote {
@@ -16,7 +16,7 @@ impl RusticNote {
 }
 
 pub fn save_notes(notes: Vec<RusticNote>) {
-    let config = get_config();
+    let config = config::get_config();
     let notes_directory = Path::new(&config.notes_directory);
 
     match notes_directory.try_exists() {
@@ -50,7 +50,6 @@ pub fn save_notes(notes: Vec<RusticNote>) {
     }
 }
 
-// todo move to a separate file
 pub fn save_note(note: &RusticNote) {
     println!("Saving note: {}", note.content);
 
@@ -72,7 +71,7 @@ pub fn save_note(note: &RusticNote) {
 }
 
 pub fn load_all_notes() -> Vec<RusticNote> {
-    let config = get_config();
+    let config = config::get_config();
     let notes_directory = Path::new(&config.notes_directory);
     
     if !notes_directory.exists() {
@@ -114,28 +113,3 @@ pub fn slow_search(notes: &[RusticNote], query: &str) -> Vec<RusticNote> {
         .cloned()
         .collect()
 }
-
-// todo move to a separate file
-
-#[derive(Deserialize)]
-pub struct RusticConfig {
-    pub notes_directory: String,
-    pub editor: Option<String>,
-}
-
-fn default_config() -> RusticConfig {
-    println!("Using default configuration.");
-    RusticConfig {
-        notes_directory: ".".to_string(),
-        editor: None,
-    }
-}
-
-pub fn get_config() -> RusticConfig {
-    match std::fs::read_to_string("config.toml") {
-        Ok(data) => toml::from_str(&data).unwrap_or_else(|_| default_config()),
-        Err(_) => default_config(),
-    }
-}
-
-// todo try to guess a default editor before returning None
