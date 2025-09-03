@@ -10,8 +10,8 @@ use cli_command::{CliCommandBuilder, CliCommand};
 const ROOT_VERSION: &str = "0.1.0";
 
 fn main() {
-    // todo add variadic positional argument
-    // todo add option to builder, to let help not be action taken if no command is not specified and instead print error
+    // todo #945 add variadic positional argument
+    // todo #946 add option to builder, to let help not be action taken if no command is not specified and instead print error
     let cli: CliCommand = CliCommandBuilder::default()
         .set_name("RusticNotes")
         .set_version(ROOT_VERSION)
@@ -26,11 +26,11 @@ fn main() {
     cli.run(env::args());
 }
 
-// todo better error handling
-// todo add tests
-// todo save notes in markdown/org-mode files with json as a manifest/metadata
-// todo edit note tags and others
-// todo projects support and persistant switching between them
-// todo active tui
-// todo if a note is long, truncate it during listing
-// todo expose api as a library for external usage
+// todo #947 better error handling
+// todo #948 add tests
+// todo #949 save notes in markdown/org-mode files with json as a manifest/metadata
+// todo #950 edit note tags and others
+// todo #951 projects support and persistant switching between them
+// todo #952 active tui
+// todo #953 if a note is long, truncate it during listing
+// todo #954 expose api as a library for external usage

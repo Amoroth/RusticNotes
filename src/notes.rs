@@ -33,7 +33,7 @@ pub fn save_notes(notes: Vec<RusticNote>) {
         },
     }
 
-    // todo save incrementally, don't overwrite whole file on every save
+    // todo #943 save incrementally, don't overwrite whole file on every save
     // idea: save offsets for every note and update just the changed note
     let serialized_notes = serde_json::to_string(&notes).unwrap();
     match std::fs::File::create(notes_directory.join("notes.json")) {

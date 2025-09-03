@@ -15,7 +15,7 @@ impl Color {
     }
 
     pub fn success() -> Color {
-        // todo involve config?
+        // todo #944 involve config?
         Color {
             red: 166,
             green: 227,

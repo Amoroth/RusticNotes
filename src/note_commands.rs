@@ -38,12 +38,12 @@ pub fn build_new_command() -> CliCommand {
             } else if let Some(note) = args.get("note") {
                 note.last().unwrap_or(&String::from("")).to_string()
             } else {
-                // todo make it easier to write
+                // todo #941 make it easier to write
                 eprintln!("{}", print_utils::colorize(print_utils::Color::error(), "Error: Note name is required."));
                 return;
             };
 
-            // todo ask if user wants to create empty note anyway
+            // todo #942 ask if user wants to create empty note anyway
             if note_content.trim().is_empty() {
                 eprintln!("{}", print_utils::colorize(print_utils::Color::error(), "Error: Note content is empty, not creating note."));
                 return;

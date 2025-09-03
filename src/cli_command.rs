@@ -86,7 +86,7 @@ pub struct CliCommand {
 }
 
 impl CliCommand {
-    // todo if command is provided but not found, print error and ask user to use --help
+    // todo #939 if command is provided but not found, print error and ask user to use --help
     pub fn run(&self, args: env::Args) {
         let env_args: Vec<String> = args.skip(1).collect();
         let command = select_command(env_args.clone(), self);

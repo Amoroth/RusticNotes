@@ -21,4 +21,4 @@ pub fn get_config() -> RusticConfig {
     }
 }
 
-// todo try to guess a default editor before returning None
+// todo #940 try to guess a default editor before returning None
