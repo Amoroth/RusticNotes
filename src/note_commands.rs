@@ -2,7 +2,6 @@ use crate::cli_command::{CliCommandBuilder, CliCommand, CliCommandOption};
 use crate::{notes, print_utils};
 use std::{collections::HashMap, io::Write};
 
-// todo if returned note is empty, dont save
 pub fn build_new_command() -> CliCommand {
     CliCommandBuilder::default()
         .set_name("new")
@@ -43,6 +42,12 @@ pub fn build_new_command() -> CliCommand {
                 eprintln!("{}", print_utils::colorize(print_utils::Color::error(), "Error: Note name is required."));
                 return;
             };
+
+            // todo ask if user wants to create empty note anyway
+            if note_content.trim().is_empty() {
+                eprintln!("{}", print_utils::colorize(print_utils::Color::error(), "Error: Note content is empty, not creating note."));
+                return;
+            }
 
             println!("Creating new note: {note_content}");
             let tags: Vec<String> = args.get("tag").unwrap_or(&vec![]).clone();
