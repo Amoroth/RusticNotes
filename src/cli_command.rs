@@ -38,11 +38,6 @@ impl CliCommandBuilder {
         self
     }
 
-    pub fn set_optional(&mut self, optional: bool) -> &mut Self {
-        self.optional = optional;
-        self
-    }
-
     pub fn add_argument(&mut self, argument: &str) -> &mut Self {
         self.arguments.push(argument.to_string());
         self
@@ -69,7 +64,6 @@ impl CliCommandBuilder {
             aliases: self.aliases.clone(),
             description: self.description.clone(),
             version: self.version.clone(),
-            optional: self.optional,
             arguments: self.arguments.clone(),
             subcommands: self.subcommands.clone(),
             options: self.options.clone(),
@@ -85,7 +79,6 @@ pub struct CliCommand {
     pub aliases: Vec<String>,
     pub description: Option<String>,
     pub version: Option<String>,
-    pub optional: bool,
     pub arguments: Vec<String>,
     pub subcommands: Vec<CliCommand>,
     pub options: Vec<CliCommandOption>,
@@ -93,6 +86,7 @@ pub struct CliCommand {
 }
 
 impl CliCommand {
+    // todo if command is provided but not found, print error and ask user to use --help
     pub fn run(&self, args: env::Args) {
         let env_args: Vec<String> = args.skip(1).collect();
         let command = select_command(env_args.clone(), self);
@@ -167,11 +161,7 @@ impl CliCommand {
         let display_items: Vec<(String, &str)> = self.subcommands
             .iter()
             .map(|subcmd| {
-                let name = if subcmd.optional {
-                    format!("[{}]", subcmd.name)
-                } else {
-                    subcmd.name.clone()
-                };
+                let name = subcmd.name.clone();
                 let description = subcmd.description.as_deref().unwrap_or("");
                 (name, description)
             })
@@ -293,18 +283,6 @@ fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String
             }
         };
     }
-
-    // check if all required arguments are present
-    // todo bug if a required subcommand is not present, it will display name of the first subcommand instead
-    // todo rewrite or rethink this better
-    // if !command.subcommands.is_empty() && command.action.is_none() {
-    //     for definition in &command.subcommands {
-    //         if !args.iter().any(|(name, _)| name == &definition.name) {
-    //             eprintln!("Missing required subcommand");
-    //             std::process::exit(1);
-    //         }
-    //     }
-    // }
 
     args
 }

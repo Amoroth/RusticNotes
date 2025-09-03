@@ -8,7 +8,6 @@ pub fn build_new_command() -> CliCommand {
         .set_name("new")
         .add_alias("add")
         .set_description("Create a new note")
-        .set_optional(false)
         .add_argument("note")
         .add_option(
             &CliCommandOption {
@@ -60,7 +59,6 @@ pub fn build_list_command() -> CliCommand {
         .set_name("list")
         .add_alias("ls")
         .set_description("List all notes")
-        .set_optional(false)
         .add_option(
             &CliCommandOption {
                 name: "tag".to_string(),
@@ -91,7 +89,6 @@ pub fn build_get_command() -> CliCommand {
     CliCommandBuilder::default()
         .set_name("get")
         .set_description("Get a single note by its id")
-        .set_optional(false)
         .add_argument("id")
         .set_action(|args: HashMap<String, Vec<String>>| {
             if let Some(id_str) = args.get("id").and_then(|v| v.last()) {
@@ -116,7 +113,6 @@ pub fn build_delete_command() -> CliCommand {
         .add_alias("remove")
         .add_alias("rm")
         .set_description("Delete a single note by its id")
-        .set_optional(false)
         .add_argument("id")
         .set_action(|args: HashMap<String, Vec<String>>| {
             if let Some(id_str) = args.get("id").and_then(|v| v.last()) {
@@ -139,7 +135,6 @@ pub fn build_search_command() -> CliCommand {
     CliCommandBuilder::default()
         .set_name("search")
         .set_description("Search for a note by a query string")
-        .set_optional(false)
         .add_argument("query")
         .add_option(
             &CliCommandOption {
@@ -184,7 +179,6 @@ pub fn build_edit_command() -> CliCommand {
     CliCommandBuilder::default()
         .set_name("edit")
         .set_description("Edit a single note by its id")
-        .set_optional(false)
         .add_argument("id")
         .add_option(
             &CliCommandOption {
