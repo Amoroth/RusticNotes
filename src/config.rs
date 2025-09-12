@@ -1,17 +1,21 @@
-use serde::{Deserialize};
+use serde::{Serialize, Deserialize};
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct RusticConfig {
     pub notes_directory: String,
     pub editor: Option<String>,
 }
 
 fn default_config() -> RusticConfig {
-    println!("Using default configuration.");
-    RusticConfig {
+    println!("Creating a default configuration file.");
+    let default_config = RusticConfig {
         notes_directory: ".".to_string(),
         editor: None,
-    }
+    };
+
+    let toml_string = toml::to_string_pretty(&default_config).unwrap();
+    std::fs::write("config.toml", toml_string).unwrap();
+    default_config
 }
 
 pub fn get_config() -> RusticConfig {

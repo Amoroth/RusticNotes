@@ -32,5 +32,4 @@ fn main() {
 // todo #950 edit note tags and others
 // todo #951 projects support and persistant switching between them
 // todo #952 active tui
-// todo #953 if a note is long, truncate it during listing
 // todo #954 expose api as a library for external usage
