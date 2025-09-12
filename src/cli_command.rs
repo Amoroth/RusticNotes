@@ -84,7 +84,6 @@ pub struct CliCommand {
 }
 
 impl CliCommand {
-    // todo #939 if command is provided but not found, print error and ask user to use --help
     pub fn run(&self, args: env::Args) {
         let env_args: Vec<String> = args.skip(1).collect();
         let command = select_command(env_args.clone(), self);
@@ -242,7 +241,7 @@ fn select_command(env_args: Vec<String>, command: &CliCommand) -> Option<&CliCom
         if !arg.starts_with("-") {
             if let Some(subcommand) = search_command(&arg, cmd) {
                 cmd = subcommand;
-            } else {
+            } else if cmd.arguments.is_empty() {
                 eprintln!("{}", print_utils::colorize(print_utils::Color::error(), format!("Command '{}' not found.", arg).as_str()));
                 println!("Please refer to --help for '{}' command.", cmd.name);
                 return None

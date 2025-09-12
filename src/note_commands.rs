@@ -84,7 +84,12 @@ pub fn build_list_command() -> CliCommand {
 
                 println!("Notes:");
                 for note in notes {
-                    println!("{}. {}", note.id, note.content);
+                    let note_content = if note.content.len() > 50 {
+                        format!("{}...", &note.content[..47])
+                    } else {
+                        note.content.clone()
+                    };
+                    println!("{}. {}", note.id, note_content);
                 }
             }
         }).build()
