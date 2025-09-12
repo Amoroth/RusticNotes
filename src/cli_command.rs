@@ -1,6 +1,5 @@
 use std::{collections::HashMap, env};
-
-use serde::de;
+use crate::print_utils;
 
 type CliCommandAction = fn(HashMap<String, Vec<String>>);
 
@@ -10,7 +9,6 @@ pub struct CliCommandBuilder {
     aliases: Vec<String>,
     description: Option<String>,
     version: Option<String>,
-    optional: bool,
     arguments: Vec<String>,
     subcommands: Vec<CliCommand>,
     options: Vec<CliCommandOption>,
@@ -90,6 +88,10 @@ impl CliCommand {
     pub fn run(&self, args: env::Args) {
         let env_args: Vec<String> = args.skip(1).collect();
         let command = select_command(env_args.clone(), self);
+        if command.is_none() {
+            return;
+        }
+        let command = command.unwrap();
 
         if search_for_help_flag(env_args.clone()) {
             self.get_version();
@@ -229,9 +231,9 @@ pub struct CliCommandOption {
     pub description: Option<String>,
 }
 
-fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
+fn select_command(env_args: Vec<String>, command: &CliCommand) -> Option<&CliCommand> {
     if env_args.is_empty() {
-        return command;
+        return Some(command);
     }
 
     let mut cmd = command;
@@ -240,12 +242,16 @@ fn select_command(env_args: Vec<String>, command: &CliCommand) -> &CliCommand {
         if !arg.starts_with("-") {
             if let Some(subcommand) = search_command(&arg, cmd) {
                 cmd = subcommand;
+            } else {
+                eprintln!("{}", print_utils::colorize(print_utils::Color::error(), format!("Command '{}' not found.", arg).as_str()));
+                println!("Please refer to --help for '{}' command.", cmd.name);
+                return None
             }
         }
     }
 
     // If no subcommand matches, return the root command
-    cmd
+    Some(cmd)
 }
 
 fn collect_arguments(env_args: Vec<String>, command: &CliCommand) -> Vec<(String, Option<String>)> {

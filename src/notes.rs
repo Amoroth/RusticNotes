@@ -58,12 +58,12 @@ pub fn save_note(note: &RusticNote) {
 
     let mut saved_notes: Vec<RusticNote> = load_all_notes();
 
-    let exiting_note = saved_notes.clone().into_iter().enumerate().find(|(_, n)| n.id == note.id);
+    let existing_note = saved_notes.clone().into_iter().enumerate().find(|(_, n)| n.id == note.id);
     saved_notes.push(note.clone());
 
-    if exiting_note.is_some() {
+    if existing_note.is_some() {
         let last_index = saved_notes.len() - 1;
-        saved_notes.swap(exiting_note.unwrap().0, last_index);
+        saved_notes.swap(existing_note.unwrap().0, last_index);
         saved_notes.pop();
     }
 
